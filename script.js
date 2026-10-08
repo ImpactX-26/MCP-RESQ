@@ -1,6 +1,4 @@
-const API_BASE_URL = (typeof window !== "undefined" && window.location && window.location.origin && window.location.origin.startsWith("http")) 
-    ? window.location.origin 
-    : "http://127.0.0.1:8000";
+const API_BASE_URL = "http://127.0.0.1:8000";
 
 const state = {
     backendConnected: false,
@@ -170,9 +168,14 @@ async function checkBackend() {
         try {
             res = await apiRequest("/api/health");
         } catch (e1) {
-            // Fallback attempt to http://127.0.0.1:8000/api/health directly
-            const rawRes = await fetch("http://127.0.0.1:8000/api/health", { signal: AbortSignal.timeout(3000) });
-            res = await rawRes.json();
+            const controller = new AbortController();
+            const tid = setTimeout(() => controller.abort(), 3000);
+            try {
+                const rawRes = await fetch("http://127.0.0.1:8000/api/health", { signal: controller.signal });
+                res = await rawRes.json();
+            } finally {
+                clearTimeout(tid);
+            }
         }
 
         if (res && (res.status === "ok" || res.backend_connected)) {
@@ -188,8 +191,7 @@ async function checkBackend() {
     } catch (error) {
         state.backendConnected = false;
         updateConnectionUI();
-        // Schedule retry after 4 seconds
-        setTimeout(checkBackend, 4000);
+        setTimeout(checkBackend, 3000);
     }
 }
 
