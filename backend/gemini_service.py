@@ -22,8 +22,8 @@ if GEMINI_API_KEY:
 
 PREFERRED_MODELS = ["gemini-3.5-flash", "gemini-3.8-flash", "gemini-flash-latest", "gemini-2.5-pro"]
 
-def call_gemini_with_fallback(prompt: str, system_instruction: str = "", max_tokens: int = 150) -> Optional[str]:
-    """Helper to try primary and fallback Gemini models with strict token & length control."""
+def call_gemini_with_fallback(prompt: str, system_instruction: str = "", max_tokens: int = 800) -> Optional[str]:
+    """Helper to try primary and fallback Gemini models with high-quality token & length control."""
     if not genai_client:
         return None
 
@@ -32,7 +32,7 @@ def call_gemini_with_fallback(prompt: str, system_instruction: str = "", max_tok
         config = types.GenerateContentConfig(
             max_output_tokens=max_tokens,
             temperature=0.2,
-            system_instruction=system_instruction if system_instruction else "Be extremely concise and direct. Keep answer under 3 short sentences."
+            system_instruction=system_instruction if system_instruction else "You are MCP-RESQ Emergency Response AI. Provide complete, well-structured, clear answers with bold headings and action points."
         )
     except Exception as e:
         config = None
@@ -89,7 +89,7 @@ Provide structured, emergency-grade decision support strictly customized to what
 2. 🚒 RESPONDER & DISPATCH TACTICAL PLAN: Specific unit dispatch recommendation, hazard containment, and hospital alert protocol.
 3. 🛡️ MCP SAFETY VERIFICATION: Explanation of why these specific resources were selected.
 """
-        llm_text = call_gemini_with_fallback(system_prompt)
+        llm_text = call_gemini_with_fallback(system_prompt, max_tokens=1000)
         if llm_text:
             return {
                 "victim_guidance": protocol["victim_instructions"],
@@ -101,7 +101,7 @@ Provide structured, emergency-grade decision support strictly customized to what
                     "assess_hazard_and_safety_checks",
                     "find_nearby_hospitals_and_facilities",
                     "verify_incident_details",
-                    "gemini_2.5_flash_llm"
+                    "gemini_3.5_flash_llm"
                 ]
             }
 
@@ -124,7 +124,7 @@ Provide structured, emergency-grade decision support strictly customized to what
 def handle_chat_message(message: str, emergency_id: Optional[str] = None) -> Dict[str, Any]:
     """
     Handles user chat messages using Gemini API + MCP Tools context.
-    Analyzes exact user question intent to execute corresponding MCP tools concisely.
+    Analyzes exact user question intent to execute corresponding MCP tools with complete answers.
     """
     msg_lower = message.lower()
     tools_invoked = []
@@ -174,27 +174,27 @@ def handle_chat_message(message: str, emergency_id: Optional[str] = None) -> Dic
         names = [f"{h['name']} ({h['distance_km']} km, ETA {h['eta_minutes']} min, {h.get('er_beds_free', 0)} ER beds free)" for h in hosp["facilities"]]
         context_blocks.append(f"Nearby Medical Facilities: {'; '.join(names)}")
 
-    # Prompt Gemini LLM with exact user message + concise directives
+    # Prompt Gemini LLM with exact user message + tailored directives
     if genai_client:
         if is_eta_query and not is_first_aid_query:
-            directive = ("STRICT DIRECTIVE: The user is asking a quick status/ETA timing question. "
-                         "Answer in EXACTLY 1 to 2 concise sentences stating the estimated arrival time in minutes and assigned unit distance. "
-                         "Do NOT output first aid steps, emergency procedures, or hospital lists.")
+            directive = ("Provide a clear, informative answer giving the exact ETA in minutes (7-9 min), assigned ambulance details, and 3 key actions for the caller while waiting (e.g. keep phone line clear, unlock front door, turn on porch lights).")
+            max_tokens = 400
         elif is_first_aid_query:
-            directive = ("STRICT DIRECTIVE: Provide concise, 3 to 5 bullet point first aid action steps based on Red Cross / Mayo Clinic guidelines. "
-                         "Keep each bullet to 1 sentence. Do NOT list nearby hospitals unless explicitly asked.")
+            directive = ("Provide a complete, medically accurate, step-by-step first aid guide based on Red Cross & Mayo Clinic protocols. Use clear numbered steps with bold headers. Include emergency dispatch details at the end.")
+            max_tokens = 800
         elif is_hospital_query:
-            directive = ("STRICT DIRECTIVE: List only the nearest emergency hospitals with distance, ETA, and free ER beds. Keep it brief.")
+            directive = ("List the nearest emergency hospitals with distance, ETA, and free ER beds clearly.")
+            max_tokens = 500
         else:
-            directive = ("STRICT DIRECTIVE: Answer the question directly and concisely in 2 sentences maximum. Avoid unnecessary details or fluff.")
+            directive = ("Provide a complete, helpful, direct answer tailored to the user's emergency query.")
+            max_tokens = 500
 
         prompt = (f"You are the MCP-RESQ Emergency Response AI powered by Google Gemini and Model Context Protocol.\n"
                   f"User Question: \"{message}\"\n\n"
                   f"Active Emergency Info & MCP Tools Context:\n"
                   f"{chr(10).join(context_blocks) if context_blocks else 'Response Units Status: Ambulance A-12 (ETA 7 mins), Fire Unit F-04 (ETA 9 mins), Rescue Team R-02 (ETA 5 mins)'}\n\n"
-                  f"{directive}")
+                  f"Instructions: {directive}")
 
-        max_tokens = 80 if is_eta_query else (350 if is_first_aid_query else 150)
         reply_text = call_gemini_with_fallback(prompt, system_instruction=directive, max_tokens=max_tokens)
         if reply_text:
             return {
@@ -218,39 +218,55 @@ def generate_mcp_fallback_reply(message: str, context_blocks: List[str], active_
     # ETA / Timing Query
     if is_eta_query and not is_first_aid_query:
         if active_emergency:
-            return f"⏱️ **Estimated Arrival Time**: **7 - 9 minutes**\nUnit **{active_emergency.get('unit_name', 'Ambulance A-12')}** is en-route (2.4 km away)."
-        return "⏱️ **Estimated Arrival Time**: **7 - 9 minutes**\nAmbulance A-12 (ALS) is stationed 2.4 km away and en-route to your location."
+            return (f"⏱️ **ESTIMATED ARRIVAL TIME**: **7 - 9 minutes**\n\n"
+                    f"• **Assigned Unit**: {active_emergency.get('unit_name', 'Ambulance A-12')} (ALS)\n"
+                    f"• **Current Distance**: 2.4 km away from your location\n"
+                    f"• **Destination Hospital**: City Emergency Trauma Hospital (14 ER beds active)\n\n"
+                    f"**While waiting for emergency responders**:\n"
+                    f"1. **Keep your phone line clear** in case emergency dispatch calls back.\n"
+                    f"2. **Unlock the front door** so paramedics can enter immediately.\n"
+                    f"3. **Turn on exterior lights** (if nighttime) and post someone outside to flag down the ambulance.")
+
+        return ("⏱️ **ESTIMATED ARRIVAL TIME**: **7 - 9 minutes**\n\n"
+                "• **Assigned Unit**: Ambulance A-12 (Advanced Life Support)\n"
+                "• **Current Distance**: 2.4 km away\n"
+                "• **Status**: En-route with live traffic prioritization\n\n"
+                "**Actions while help is en-route**:\n"
+                "1. Keep the patient calm and lying flat.\n"
+                "2. Unlock the main entrance for paramedics.\n"
+                "3. Turn on outdoor porch lights so responders locate your address quickly.")
 
     # Medical Neck / Spinal Fracture Query
     if any(k in msg_lower for k in ["neck", "spine", "spinal", "back", "paralyz", "broken neck", "breaks their neck", "broke neck"]):
         kb = MCPToolsEngine.search_medical_knowledgebase(message)
-        steps = "\n".join([f"• {g}" for g in kb["guidance"]])
-        return (f"🩺 **SPINAL NECK INJURY FIRST AID (Red Cross Protocol)**:\n"
+        steps = "\n".join([f"{g}" for g in kb["guidance"]])
+        return (f"🩺 **SPINAL & CERVICAL NECK INJURY FIRST AID** *(Red Cross / Mayo Clinic Protocol)*:\n\n"
                 f"{steps}\n\n"
-                f"🚑 **Dispatch**: Ambulance A-12 (ALS) en-route with spinal board (ETA 7 mins).")
+                f"🚑 **Emergency Dispatch**: Ambulance A-12 (ALS) equipped with cervical collar and spinal board is en-route (ETA 7 mins).")
 
     if any(k in msg_lower for k in ["chok", "heimlich", "airway"]):
         kb = MCPToolsEngine.search_medical_knowledgebase(message)
-        steps = "\n".join([f"• {g}" for g in kb["guidance"]])
-        return f"🩺 **CHOKING FIRST AID (AHA Protocol)**:\n{steps}"
+        steps = "\n".join([f"{g}" for g in kb["guidance"]])
+        return f"🩺 **CHOKING FIRST AID (AHA Protocol)**:\n\n{steps}"
 
     if any(k in msg_lower for k in ["bleed", "hemorrhage", "wound"]):
         kb = MCPToolsEngine.search_medical_knowledgebase(message)
-        steps = "\n".join([f"• {g}" for g in kb["guidance"]])
-        return f"🩸 **BLEEDING CONTROL PROTOCOL**:\n{steps}"
+        steps = "\n".join([f"{g}" for g in kb["guidance"]])
+        return f"🩸 **BLEEDING CONTROL PROTOCOL (Red Cross First Aid)**:\n\n{steps}"
 
     if any(k in msg_lower for k in ["fire", "smoke", "flame", "explosion"]):
-        return ("🔥 **FIRE EMERGENCY RESPONSE**:\n"
-                "• **Evacuate immediately** via stairs. Do NOT use elevators.\n"
-                "• Stay low under smoke to avoid carbon monoxide.\n"
-                "• Fire Tender F-04 dispatched (ETA 9 mins).")
+        return ("🔥 **FIRE EMERGENCY RESPONSE (MCP SOP)**:\n\n"
+                "1. **Evacuate immediately** via fire stairwells. Do NOT use elevators.\n"
+                "2. Stay below 3-foot mark to avoid carbon monoxide smoke inhalation.\n"
+                "3. Touch doors with back of hand before opening.\n"
+                "4. Fire Tender F-04 (Yelahanka Station) dispatched (ETA 9 mins).")
 
     if is_hospital_query:
-        return ("🏥 **Nearest Emergency Hospitals**:\n"
-                "1. **City Emergency Trauma Hospital** (3.2 km, ETA 8 min) — 14 ER beds free\n"
-                "2. **Metro Care Specialty Hospital** (4.5 km, ETA 12 min) — 8 ER beds free")
+        return ("🏥 **Nearest Emergency Hospitals**:\n\n"
+                "1. **City Emergency Trauma Hospital** (3.2 km, ETA 8 min) — Level 1 Trauma, 14 ER beds free\n"
+                "2. **Metro Care Specialty Hospital** (4.5 km, ETA 12 min) — Level 2 Trauma, 8 ER beds free")
 
-    return (f"⏱️ **Emergency Response Status**: Ambulance A-12 (ETA 7 mins) and Rescue Team R-02 (ETA 5 mins) are available. "
-            "Please specify if you need first aid guidance, fire evacuation, or hospital location.")
+    return (f"🚨 **MCP-RESQ Emergency Response AI**: Ambulance A-12 (ETA 7 mins) and Heavy Rescue Team R-02 (ETA 5 mins) are active. "
+            "Please specify if you need immediate Medical first aid, Fire evacuation, or Hospital locations.")
 
 
