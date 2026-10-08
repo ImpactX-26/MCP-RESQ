@@ -13,18 +13,18 @@ When the backend is unavailable, the app runs in fully functional demo mode with
 
 ## Live Pages
 
-| Page | Icon | Description |
-|------|------|-------------|
-| Home |   | Emergency assistance overview with quick emergency types |
-| Emergency |   | Report an emergency, system analysis & emergency ID creation |
-| Tracking |   | Live response map with unit locations, ETA, and progress |
-| Nearby |   | Nearby hospitals, fire stations, police, and rescue services |
-| Assistant |   | AI chat for emergency questions and status inquiries |
-| Control |   | Operator view: stats, active emergency, activity log |
-| Resources |   | Monitor and dispatch ambulance, fire, and rescue units |
-| MCP |   | Test MCP service connectivity (location, resource, hospital, verification) |
-| Verification |   | Validate emergency data, resources, and AI decisions |
-| System |   | Technical status of frontend, backend, MCP, and database |
+| Page | Description |
+|------|-------------|
+| Home |Emergency assistance overview with quick emergency types |
+| Emergency |Report an emergency, system analysis & emergency ID creation |
+| Tracking | Live response map with unit locations, ETA, and progress |
+| Nearby |Nearby hospitals, fire stations, police, and rescue services |
+| Assistant | AI chat for emergency questions and status inquiries |
+| Control  Operator view: stats, active emergency, activity log |
+| Resources | Monitor and dispatch ambulance, fire, and rescue units |
+| MCP | Test MCP service connectivity (location, resource, hospital, verification) |
+| Verification | Validate emergency data, resources, and AI decisions |
+| System | Technical status of frontend, backend, MCP, and database |
 
 ## UI Features
 
