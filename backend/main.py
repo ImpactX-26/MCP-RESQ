@@ -285,11 +285,68 @@ def test_mcp_service(service: str = Path(...)):
             "data": ver
         }
 
+from fastapi import FastAPI, HTTPException, Request, Path, Form, UploadFile, File, Response
+from voice_service import process_voice_call_webhook, process_audio_file_transcription
+
+# -------------------------------------------------------------
+# 6. Phone Call Voice & Speech-to-Text Endpoints (Twilio & Audio API)
+# -------------------------------------------------------------
+@app.post("/api/voice/webhook")
+async def voice_webhook(request: Request, SpeechResult: Optional[str] = Form(None), From: Optional[str] = Form(None), CallSid: Optional[str] = Form(None)):
+    """
+    Twilio Phone Call Webhook.
+    1. Converts incoming caller speech to text (Speech-to-Text).
+    2. Runs Gemini AI + MCP tools to analyze emergency details.
+    3. Returns TwiML Voice XML so the AI speaks advice to caller over phone.
+    """
+    if not SpeechResult:
+        try:
+            body = await request.form()
+            SpeechResult = body.get("SpeechResult")
+            From = body.get("From")
+            CallSid = body.get("CallSid")
+        except Exception:
+            pass
+
+    twiml_xml = process_voice_call_webhook(
+        speech_result=SpeechResult,
+        caller_number=From,
+        call_sid=CallSid
+    )
+    return Response(content=twiml_xml, media_type="application/xml")
+
+
+@app.post("/api/voice/transcribe")
+async def transcribe_audio_file(file: UploadFile = File(...)):
+    """
+    Uploads an audio recording (.wav, .mp3, .m4a, .webm),
+    transcribes speech into text, and processes emergency details via MCP tools.
+    """
+    contents = await file.read()
+    result = process_audio_file_transcription(audio_bytes=contents, filename=file.filename)
+    return result
+
+
+@app.post("/api/voice/simulate")
+async def simulate_voice_call(req: Dict[str, Any]):
+    """
+    Simulates a phone call speech input for testing without Twilio credentials.
+    Example payload: {"speech": "There is a gas leak at Central Hub and workers are unconscious."}
+    """
+    speech_text = req.get("speech", "")
+    caller = req.get("caller", "+1-800-555-0199")
+    twiml_xml = process_voice_call_webhook(speech_result=speech_text, caller_number=caller)
+    
+    emergency_id = f"EMG-VOICE-{int(time.time() * 1000) % 1000000:06d}"
+    ai_guidance = handle_chat_message(speech_text, emergency_id)
+    
     return {
-        "service": srv,
-        "status": "ONLINE",
-        "mcp_tool": f"test_{srv}_service",
-        "latency_ms": 15
+        "status": "success",
+        "caller": caller,
+        "speech_transcription": speech_text,
+        "twiml_voice_xml_response": twiml_xml,
+        "ai_guidance": ai_guidance,
+        "timestamp": datetime.now().isoformat()
     }
 
 
