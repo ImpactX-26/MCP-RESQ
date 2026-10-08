@@ -1,4 +1,6 @@
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = (typeof window !== "undefined" && window.location && window.location.origin && window.location.origin.startsWith("http")) 
+    ? window.location.origin 
+    : "http://127.0.0.1:8000";
 
 const state = {
     backendConnected: false,
@@ -164,18 +166,30 @@ async function apiRequest(endpoint, options = {}) {
 
 async function checkBackend() {
     try {
-        await apiRequest("/api/health");
+        let res;
+        try {
+            res = await apiRequest("/api/health");
+        } catch (e1) {
+            // Fallback attempt to http://127.0.0.1:8000/api/health directly
+            const rawRes = await fetch("http://127.0.0.1:8000/api/health", { signal: AbortSignal.timeout(3000) });
+            res = await rawRes.json();
+        }
 
-        state.backendConnected = true;
-
-        updateConnectionUI();
-        addMCPLog("FastAPI backend connected", true);
+        if (res && (res.status === "ok" || res.backend_connected)) {
+            if (!state.backendConnected) {
+                state.backendConnected = true;
+                updateConnectionUI();
+                addMCPLog("FastAPI backend connected", true);
+            }
+        } else {
+            throw new Error("Invalid health response");
+        }
 
     } catch (error) {
         state.backendConnected = false;
-
         updateConnectionUI();
-        addMCPLog("Backend unavailable - demo mode active", false);
+        // Schedule retry after 4 seconds
+        setTimeout(checkBackend, 4000);
     }
 }
 
