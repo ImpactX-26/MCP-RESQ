@@ -22,16 +22,34 @@ if GEMINI_API_KEY:
 
 PREFERRED_MODELS = ["gemini-3.5-flash", "gemini-3.8-flash", "gemini-flash-latest", "gemini-2.5-pro"]
 
-def call_gemini_with_fallback(prompt: str) -> Optional[str]:
-    """Helper to try primary and fallback Gemini models."""
+def call_gemini_with_fallback(prompt: str, system_instruction: str = "", max_tokens: int = 150) -> Optional[str]:
+    """Helper to try primary and fallback Gemini models with strict token & length control."""
     if not genai_client:
         return None
+
+    try:
+        from google.genai import types
+        config = types.GenerateContentConfig(
+            max_output_tokens=max_tokens,
+            temperature=0.2,
+            system_instruction=system_instruction if system_instruction else "Be extremely concise and direct. Keep answer under 3 short sentences."
+        )
+    except Exception as e:
+        config = None
+
     for model_name in PREFERRED_MODELS:
         try:
-            response = genai_client.models.generate_content(
-                model=model_name,
-                contents=prompt
-            )
+            if config:
+                response = genai_client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                    config=config
+                )
+            else:
+                response = genai_client.models.generate_content(
+                    model=model_name,
+                    contents=prompt
+                )
             if response and hasattr(response, "text") and response.text:
                 return response.text
         except Exception as e:
@@ -106,7 +124,7 @@ Provide structured, emergency-grade decision support strictly customized to what
 def handle_chat_message(message: str, emergency_id: Optional[str] = None) -> Dict[str, Any]:
     """
     Handles user chat messages using Gemini API + MCP Tools context.
-    Analyzes exact user question intent to execute corresponding MCP tools.
+    Analyzes exact user question intent to execute corresponding MCP tools concisely.
     """
     msg_lower = message.lower()
     tools_invoked = []
@@ -115,138 +133,124 @@ def handle_chat_message(message: str, emergency_id: Optional[str] = None) -> Dic
     # Active emergency context lookup
     active_emergency = emergencies_db.get(emergency_id) if emergency_id else None
 
+    # Detect query intent categories
+    is_eta_query = any(k in msg_lower for k in ["how long", "eta", "when", "arrive", "status", "where is", "help take", "how far", "who is coming", "tracking", "time"])
+    is_first_aid_query = any(k in msg_lower for k in ["what to do", "how to", "first aid", "neck", "spine", "spinal", "bleed", "cpr", "chok", "burn", "fracture", "treat", "help for", "save", "broke", "break"])
+    is_hospital_query = bool(re.search(r'\b(hospital|hospitals|er|trauma desk|icu)\b', msg_lower))
+
     # Intent analysis & dynamic specialized MCP tool execution
-    if any(k in msg_lower for k in ["gas", "leak", "chemical", "toxic", "hazard", "propane", "methane"]):
+    if is_eta_query and not is_first_aid_query:
+        res = MCPToolsEngine.lookup_emergency_resources()
+        tools_invoked.append("lookup_emergency_resources()")
+        avail = [f"{u['name']} ({u['status']}, ETA {u['eta_minutes']} min, {u['distance_km']} km)" for u in res["units"]]
+        context_blocks.append(f"Response Units Live Status: {'; '.join(avail)}")
+
+    elif any(k in msg_lower for k in ["gas", "leak", "chemical", "toxic", "hazard", "propane", "methane"]):
         hazmat = MCPToolsEngine.call_hazmat_containment_squad(emergency_id or "EMG-GENERAL")
         evac_zone = MCPToolsEngine.assess_gas_leak_evacuation_zone()
         tools_invoked.extend(["call_hazmat_containment_squad", "assess_gas_leak_evacuation_zone"])
-        context_blocks.append(f"Hazmat Containment Unit Deployed: {hazmat['unit_dispatched']['name']}")
-        context_blocks.append(f"Gas Leak Perimeter Advice: {evac_zone['wind_direction_advice']}")
-        context_blocks.append(f"Safety Protocols: {evac_zone['safety_instructions']}")
+        context_blocks.append(f"Hazmat Squad: {hazmat['unit_dispatched']['name']}")
+        context_blocks.append(f"Evacuation Advice: {evac_zone['wind_direction_advice']}")
 
     elif any(k in msg_lower for k in ["fire", "smoke", "flame", "explosion"]):
         fire_call = MCPToolsEngine.call_fire_engine_station(emergency_id or "EMG-GENERAL")
         evac_plan = MCPToolsEngine.generate_fire_evacuation_plan()
-        exting = MCPToolsEngine.locate_nearby_extinguishers_and_suppression()
-        tools_invoked.extend(["call_fire_engine_station", "generate_fire_evacuation_plan", "locate_nearby_extinguishers_and_suppression"])
-        context_blocks.append(f"Fire Engine Call: {fire_call['unit_dispatched']['name']} from {fire_call['station']}")
-        context_blocks.append(f"Evacuation Steps: {evac_plan['evacuation_steps']}")
-        context_blocks.append(f"Suppression Equipment: {[a['type'] for a in exting['suppression_assets']]}")
+        tools_invoked.extend(["call_fire_engine_station", "generate_fire_evacuation_plan"])
+        context_blocks.append(f"Fire Engine: {fire_call['unit_dispatched']['name']} ({fire_call['station']})")
+        context_blocks.append(f"Evacuation SOP: Evacuate via stairs, stay low under smoke.")
 
-    elif any(k in msg_lower for k in ["medical", "doctor", "ambulance", "heart", "bleed", "injur", "breathe", "pain", "cpr", "stroke", "chok", "faint", "seizure", "burn", "poison", "fracture", "headache", "chest", "head", "gasp", "pulse", "allergy", "anaphylaxis", "bite", "sting", "wound", "cut", "trauma", "unconscious", "first aid", "health", "patient", "sick", "neck", "spine", "spinal", "break", "broke"]):
+    elif is_first_aid_query or any(k in msg_lower for k in ["medical", "doctor", "ambulance", "heart", "bleed", "injur", "breathe", "pain", "cpr", "stroke", "chok", "faint", "seizure", "burn", "poison", "fracture", "chest", "gasp", "pulse", "trauma", "unconscious", "first aid", "health"]):
         med_kb = MCPToolsEngine.search_medical_knowledgebase(message)
         amb_dispatch = MCPToolsEngine.dispatch_ambulance_unit(emergency_id or "EMG-GENERAL")
-        proto = MCPToolsEngine.get_incident_protocols("medical")
-        tools_invoked.extend(["search_medical_knowledgebase", "dispatch_ambulance_unit", "get_incident_protocols(medical)"])
-        context_blocks.append(f"Medical KB Search ({med_kb['topic']} - Source: {med_kb['source']}):")
+        tools_invoked.extend(["search_medical_knowledgebase", "dispatch_ambulance_unit"])
+        context_blocks.append(f"Medical Guidance ({med_kb['topic']}):")
         for step in med_kb['guidance']:
             context_blocks.append(f"  - {step}")
-        context_blocks.append(f"Medical Dispatch: {amb_dispatch['unit_dispatched']['name']} (Destination: {amb_dispatch['destination_hospital']})")
-        context_blocks.append(f"ER Beds Available: {amb_dispatch['er_beds_available']} free at City Trauma Hospital")
+        context_blocks.append(f"Dispatched: {amb_dispatch['unit_dispatched']['name']} (ETA {amb_dispatch['unit_dispatched']['eta_minutes']} min)")
 
-    elif any(k in msg_lower for k in ["rescue", "trapped", "flood", "earthquake", "building", "collapse"]):
-        heavy = MCPToolsEngine.dispatch_heavy_rescue_squad(emergency_id or "EMG-GENERAL")
-        proto = MCPToolsEngine.get_incident_protocols("rescue")
-        tools_invoked.extend(["dispatch_heavy_rescue_squad", "get_incident_protocols(rescue)"])
-        context_blocks.append(f"Heavy Rescue Squad Deployed: {heavy['unit_dispatched']['name']} ({', '.join(heavy['equipment_deployed'])})")
-        context_blocks.append(f"Rescue Survival SOP: {proto['victim_instructions']}")
-
-    elif re.search(r'\b(hospital|hospitals|er|trauma desk|icu)\b', msg_lower):
+    elif is_hospital_query:
         hosp = MCPToolsEngine.find_nearby_hospitals_and_facilities("hospital")
         tools_invoked.append("find_nearby_hospitals_and_facilities(hospital)")
-        names = [f"{h['name']} ({h['distance_km']} km, {h.get('er_beds_free', 0)} ER beds free)" for h in hosp["facilities"]]
+        names = [f"{h['name']} ({h['distance_km']} km, ETA {h['eta_minutes']} min, {h.get('er_beds_free', 0)} ER beds free)" for h in hosp["facilities"]]
         context_blocks.append(f"Nearby Medical Facilities: {'; '.join(names)}")
 
-    elif any(k in msg_lower for k in ["status", "where", "eta", "tracking", "unit", "location"]):
-        res = MCPToolsEngine.lookup_emergency_resources()
-        tools_invoked.append("lookup_emergency_resources()")
-        avail = [f"{u['name']} ({u['status']}, ETA {u['eta_minutes']} min)" for u in res["units"]]
-        context_blocks.append(f"Response Units Live Status: {', '.join(avail)}")
-
-    # Prompt Gemini LLM with exact user message + MCP context
+    # Prompt Gemini LLM with exact user message + concise directives
     if genai_client:
-        is_medical_query = any(k in msg_lower for k in ["medical", "doctor", "ambulance", "heart", "bleed", "injur", "breathe", "pain", "cpr", "stroke", "chok", "faint", "seizure", "burn", "poison", "fracture", "headache", "chest", "head", "gasp", "pulse", "allergy", "anaphylaxis", "bite", "sting", "wound", "cut", "trauma", "unconscious", "first aid", "health", "sick", "patient", "neck", "spine", "spinal", "break", "broke"])
-        
-        prompt = f"""
-You are the MCP-RESQ Medical Triage & Emergency Response AI powered by Google Gemini and Model Context Protocol.
-The user asked the following question: "{message}"
+        if is_eta_query and not is_first_aid_query:
+            directive = ("STRICT DIRECTIVE: The user is asking a quick status/ETA timing question. "
+                         "Answer in EXACTLY 1 to 2 concise sentences stating the estimated arrival time in minutes and assigned unit distance. "
+                         "Do NOT output first aid steps, emergency procedures, or hospital lists.")
+        elif is_first_aid_query:
+            directive = ("STRICT DIRECTIVE: Provide concise, 3 to 5 bullet point first aid action steps based on Red Cross / Mayo Clinic guidelines. "
+                         "Keep each bullet to 1 sentence. Do NOT list nearby hospitals unless explicitly asked.")
+        elif is_hospital_query:
+            directive = ("STRICT DIRECTIVE: List only the nearest emergency hospitals with distance, ETA, and free ER beds. Keep it brief.")
+        else:
+            directive = ("STRICT DIRECTIVE: Answer the question directly and concisely in 2 sentences maximum. Avoid unnecessary details or fluff.")
 
-Active Emergency Report: {active_emergency if active_emergency else "None logged yet."}
-MCP Tools Context & Web-Verified Medical Knowledgebase Retrieved:
-{chr(10).join(context_blocks) if context_blocks else "General Emergency Services Knowledge Base"}
+        prompt = (f"You are the MCP-RESQ Emergency Response AI powered by Google Gemini and Model Context Protocol.\n"
+                  f"User Question: \"{message}\"\n\n"
+                  f"Active Emergency Info & MCP Tools Context:\n"
+                  f"{chr(10).join(context_blocks) if context_blocks else 'Response Units Status: Ambulance A-12 (ETA 7 mins), Fire Unit F-04 (ETA 9 mins), Rescue Team R-02 (ETA 5 mins)'}\n\n"
+                  f"{directive}")
 
-{"CLINICAL MEDICAL DIRECTIVE: Search and summarize authoritative medical sources (Red Cross, Mayo Clinic, AHA guidelines). Provide immediate, step-by-step first aid (e.g. Spinal Immobilization, Airway, Bleeding Control). Be calm, authoritative, precise, and medically accurate. Do NOT return generic hospital list unless asked specifically for nearby hospitals." if is_medical_query else "Provide direct, actionable emergency guidance tailored specifically to the user question."}
-
-Structure your response with clear numbered/bulleted action steps and bold key medical terms. Include ambulance dispatch details if medical assistance is needed.
-"""
-        reply_text = call_gemini_with_fallback(prompt)
+        max_tokens = 80 if is_eta_query else (350 if is_first_aid_query else 150)
+        reply_text = call_gemini_with_fallback(prompt, system_instruction=directive, max_tokens=max_tokens)
         if reply_text:
             return {
-                "reply": reply_text,
-                "tools_invoked": tools_invoked or ["search_medical_knowledgebase", "gemini_2.5_flash_llm"],
+                "reply": reply_text.strip(),
+                "tools_invoked": tools_invoked or ["lookup_emergency_resources", "gemini_3.5_flash_llm"],
                 "emergency_id": emergency_id
             }
 
     # Fallback to Local MCP Chat Response if Gemini API Key fails or returns empty
-    fallback_reply = generate_mcp_fallback_reply(message, context_blocks, active_emergency)
+    fallback_reply = generate_mcp_fallback_reply(message, context_blocks, active_emergency, is_eta_query, is_first_aid_query, is_hospital_query)
     return {
         "reply": fallback_reply,
-        "tools_invoked": tools_invoked or ["search_medical_knowledgebase", "mcp_fallback_engine"],
+        "tools_invoked": tools_invoked or ["mcp_fallback_engine"],
         "emergency_id": emergency_id
     }
 
 
-def generate_mcp_fallback_reply(message: str, context_blocks: List[str], active_emergency: Any) -> str:
+def generate_mcp_fallback_reply(message: str, context_blocks: List[str], active_emergency: Any, is_eta_query: bool = False, is_first_aid_query: bool = False, is_hospital_query: bool = False) -> str:
     msg_lower = message.lower()
+
+    # ETA / Timing Query
+    if is_eta_query and not is_first_aid_query:
+        if active_emergency:
+            return f"⏱️ **Estimated Arrival Time**: **7 - 9 minutes**\nUnit **{active_emergency.get('unit_name', 'Ambulance A-12')}** is en-route (2.4 km away)."
+        return "⏱️ **Estimated Arrival Time**: **7 - 9 minutes**\nAmbulance A-12 (ALS) is stationed 2.4 km away and en-route to your location."
 
     # Medical Neck / Spinal Fracture Query
     if any(k in msg_lower for k in ["neck", "spine", "spinal", "back", "paralyz", "broken neck", "breaks their neck", "broke neck"]):
         kb = MCPToolsEngine.search_medical_knowledgebase(message)
-        steps = "\n".join([f"{g}" for g in kb["guidance"]])
-        return (f"🩺 **SPINAL & CERVICAL NECK INJURY FIRST AID (Red Cross / Mayo Clinic Protocol)**:\n\n"
+        steps = "\n".join([f"• {g}" for g in kb["guidance"]])
+        return (f"🩺 **SPINAL NECK INJURY FIRST AID (Red Cross Protocol)**:\n"
                 f"{steps}\n\n"
-                f"🚑 **Dispatch Update**: Ambulance A-12 (ALS) equipped with cervical collar and spinal board dispatched (ETA 7 mins).")
+                f"🚑 **Dispatch**: Ambulance A-12 (ALS) en-route with spinal board (ETA 7 mins).")
 
     if any(k in msg_lower for k in ["chok", "heimlich", "airway"]):
         kb = MCPToolsEngine.search_medical_knowledgebase(message)
-        steps = "\n".join([f"{g}" for g in kb["guidance"]])
-        return (f"🩺 **CHOKING FIRST AID (AHA Emergency Protocol)**:\n\n{steps}")
+        steps = "\n".join([f"• {g}" for g in kb["guidance"]])
+        return f"🩺 **CHOKING FIRST AID (AHA Protocol)**:\n{steps}"
 
     if any(k in msg_lower for k in ["bleed", "hemorrhage", "wound"]):
         kb = MCPToolsEngine.search_medical_knowledgebase(message)
-        steps = "\n".join([f"{g}" for g in kb["guidance"]])
-        return (f"🩸 **BLEEDING CONTROL PROTOCOL (Red Cross First Aid)**:\n\n{steps}")
+        steps = "\n".join([f"• {g}" for g in kb["guidance"]])
+        return f"🩸 **BLEEDING CONTROL PROTOCOL**:\n{steps}"
 
     if any(k in msg_lower for k in ["fire", "smoke", "flame", "explosion"]):
-        return ("🔥 **FIRE EMERGENCY RESPONSE (MCP SOP)**:\n"
-                "1. **Evacuate immediately** via stairs. Do NOT use elevators.\n"
-                "2. Stay low to the ground to avoid toxic smoke inhalation.\n"
-                "3. Fire Tender F-04 (Yelahanka Fire Station) has been notified.\n"
-                "4. Stop, Drop, and Roll if clothing catches fire.")
+        return ("🔥 **FIRE EMERGENCY RESPONSE**:\n"
+                "• **Evacuate immediately** via stairs. Do NOT use elevators.\n"
+                "• Stay low under smoke to avoid carbon monoxide.\n"
+                "• Fire Tender F-04 dispatched (ETA 9 mins).")
 
-    if any(k in msg_lower for k in ["medical", "injured", "pain", "ambulance", "heart", "cpr", "stroke", "poison", "fracture"]):
-        return ("🚑 **MEDICAL EMERGENCY FIRST AID (Red Cross SOP)**:\n"
-                "1. Keep patient calm, comfortable, and lying completely flat.\n"
-                "2. Loosen tight clothing around neck and waist to clear airway.\n"
-                "3. If bleeding, apply direct, firm pressure with a clean cloth.\n"
-                "4. Ambulance A-12 (ALS) is stationed 2.4 km away with a 7-minute ETA.")
-
-    if any(k in msg_lower for k in ["status", "tracking", "eta", "where"]):
-        if active_emergency:
-            return f"📍 **Emergency Tracking ({active_emergency.get('id', 'Active')})**:\nStatus: {active_emergency.get('status', 'DETECTED')}\nType: {active_emergency.get('type', 'General').upper()}\nResponders en-route with live updates."
-        return ("🚑 **Live Resource Status**:\n"
-                "- Ambulance A-12: Available (ETA 7 mins)\n"
-                "- Fire Unit F-04: Available (ETA 9 mins)\n"
-                "- Rescue Team R-02: Available (ETA 5 mins)")
-
-    # FIX: Use regex word boundary matching so substring "er" in "person" does NOT match!
-    if re.search(r'\b(hospital|hospitals|er|trauma desk|icu)\b', msg_lower):
+    if is_hospital_query:
         return ("🏥 **Nearest Emergency Hospitals**:\n"
-                "1. **City Emergency Trauma Hospital** (3.2 km, ETA 8 min) — Level 1 Trauma, 14 ER beds free\n"
-                "2. **Metro Care Specialty Hospital** (4.5 km, ETA 12 min) — Level 2 Trauma, 8 ER beds free")
+                "1. **City Emergency Trauma Hospital** (3.2 km, ETA 8 min) — 14 ER beds free\n"
+                "2. **Metro Care Specialty Hospital** (4.5 km, ETA 12 min) — 8 ER beds free")
 
-    return (f"🚨 **MCP-RESQ Emergency AI**: Received query: \"{message}\". "
-            "MCP system analyzed emergency medical sources, response units, and hazard protocols. "
-            "Please specify if you need immediate Medical first aid, Fire evacuation, or Rescue dispatch.")
+    return (f"⏱️ **Emergency Response Status**: Ambulance A-12 (ETA 7 mins) and Rescue Team R-02 (ETA 5 mins) are available. "
+            "Please specify if you need first aid guidance, fire evacuation, or hospital location.")
 
 
