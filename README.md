@@ -53,19 +53,24 @@ When the backend is unavailable, the app runs in fully functional demo mode with
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| /api/health | GET | Backend health check (checkBackend()) |
-| /api/units | GET | List emergency units (getUnits()) |
-| /api/nearby-help | GET | Nearby emergency services (getNearbyHelp()) |
-| /api/emergencies | POST | Create new emergency (createEmergency()) |
-| /api/emergencies/{id} | GET | Retrieve emergency by ID (getEmergency()) |
-| /api/emergencies/{id}/tracking | GET | Get tracking data (getTracking()) |
-| /api/units/{id}/dispatch | POST | Dispatch a unit to emergency (dispatchUnit()) |
-| /api/verify | POST | Verify emergency data (verifyEmergency()) |
-| /api/coordinate | POST | Coordinate response (coordinateResponse()) |
-| /api/chat | POST | Send chat message (sendChatMessage()) |
-| /api/mcp/{service}/test | GET\|POST | Test MCP service (testMCPService()) services: location, resource, hospital, verification |
+| `/api/health` | GET | Backend health check |
+| `/api/units` | GET | List emergency units |
+| `/api/nearby-help` | GET | Nearby emergency services |
+| `/api/emergencies` | POST | Create new emergency with AI analysis |
+| `/api/emergencies/{id}` | GET | Retrieve emergency by ID |
+| `/api/emergencies/{id}/tracking` | GET | Get live tracking & ETA data |
+| `/api/units/{id}/dispatch` | POST | Dispatch a unit to emergency |
+| `/api/verify` | POST | Verify emergency data & hazard score |
+| `/api/coordinate` | POST | Coordinate response tactical plan |
+| `/api/chat` | POST | AI chatbot assistant query handler |
+| `/api/voice/status` | GET | Check Twilio Voice & Auth Token status |
+| `/api/voice/webhook` | POST | Twilio Phone Call Speech-to-Text webhook |
+| `/api/voice/transcribe` | POST | Transcribe uploaded audio files (.wav, .mp3) |
+| `/api/voice/simulate` | POST | Simulate phone call speech input for testing |
+| `/api/voice/call-responder` | POST | Trigger automated outbound AI phone call to responder/victim |
+| `/api/mcp/{service}/test` | GET\|POST | Test MCP services (location, resource, hospital, verification) |
 
-All endpoints expect/return JSON with {error} fallback on failure. The frontend gracefully falls back to demo data when any request fails (network error, timeout, non-2xx status).
+See [backend/README.md](file:///c:/Users/sanjay/OneDrive/Desktop/impactx/MCP-RESQ/backend/README.md) for full backend documentation, Twilio Auth Token configuration, and MCP tool details.
 
 ## Demo Mode
 

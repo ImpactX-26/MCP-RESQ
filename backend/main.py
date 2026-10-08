@@ -286,11 +286,37 @@ def test_mcp_service(service: str = Path(...)):
         }
 
 from fastapi import FastAPI, HTTPException, Request, Path, Form, UploadFile, File, Response
-from voice_service import process_voice_call_webhook, process_audio_file_transcription
+from voice_service import (
+    process_voice_call_webhook,
+    process_audio_file_transcription,
+    trigger_outbound_voice_call,
+    get_twilio_config_status
+)
 
 # -------------------------------------------------------------
 # 6. Phone Call Voice & Speech-to-Text Endpoints (Twilio & Audio API)
 # -------------------------------------------------------------
+@app.get("/api/voice/status")
+def voice_status():
+    """Checks Twilio Voice credentials & Auth Token status in .env."""
+    return get_twilio_config_status()
+
+
+@app.post("/api/voice/call-responder")
+def call_responder(req: Dict[str, Any]):
+    """
+    Triggers an outbound automated emergency AI phone call to a responder or victim.
+    Payload: {"to_phone_number": "+18005550199", "message": "Ambulance A-12 is 2 minutes away."}
+    """
+    to_phone = req.get("to_phone_number") or req.get("phone")
+    message = req.get("message", "Emergency AI update: Responders are en-route to your location.")
+    
+    if not to_phone:
+        raise HTTPException(status_code=400, detail="Missing required field 'to_phone_number'.")
+        
+    return trigger_outbound_voice_call(to_phone_number=to_phone, message=message)
+
+
 @app.post("/api/voice/webhook")
 async def voice_webhook(request: Request, SpeechResult: Optional[str] = Form(None), From: Optional[str] = Form(None), CallSid: Optional[str] = Form(None)):
     """
