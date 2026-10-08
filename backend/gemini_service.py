@@ -20,7 +20,7 @@ if GEMINI_API_KEY:
         print(f"[WARN] Gemini SDK init warning: {e}. Falling back to MCP Decision Engine.")
 
 
-PREFERRED_MODELS = ["gemini-3.5-flash", "gemini-3.8-flash", "gemini-flash-latest", "gemini-2.5-pro"]
+PREFERRED_MODELS = ["gemini-3.5-flash", "gemini-3.1-pro-preview", "gemini-3.5-flash-lite", "gemini-3.8-flash"]
 
 def call_gemini_with_fallback(prompt: str, system_instruction: str = "", max_tokens: int = 800) -> Optional[str]:
     """Helper to try primary and fallback Gemini models with high-quality token & length control."""
@@ -177,25 +177,26 @@ def handle_chat_message(message: str, emergency_id: Optional[str] = None) -> Dic
     # Prompt Gemini LLM with exact user message + tailored directives
     if genai_client:
         if is_eta_query and not is_first_aid_query:
-            directive = ("Provide a clear, informative answer giving the exact ETA in minutes (7-9 min), assigned ambulance details, and 3 key actions for the caller while waiting (e.g. keep phone line clear, unlock front door, turn on porch lights).")
-            max_tokens = 400
+            directive = ("Provide a complete, clear answer giving the exact ETA in minutes (7-9 min), assigned ambulance details, and 3 key actions for the caller while waiting (e.g. keep phone line clear, unlock front door, turn on porch lights).")
+            max_tokens = 600
         elif is_first_aid_query:
             directive = ("Provide a complete, medically accurate, step-by-step first aid guide based on Red Cross & Mayo Clinic protocols. Use clear numbered steps with bold headers. Include emergency dispatch details at the end.")
-            max_tokens = 800
+            max_tokens = 1000
         elif is_hospital_query:
             directive = ("List the nearest emergency hospitals with distance, ETA, and free ER beds clearly.")
-            max_tokens = 500
+            max_tokens = 600
         else:
             directive = ("Provide a complete, helpful, direct answer tailored to the user's emergency query.")
-            max_tokens = 500
+            max_tokens = 600
 
-        prompt = (f"You are the MCP-RESQ Emergency Response AI powered by Google Gemini and Model Context Protocol.\n"
-                  f"User Question: \"{message}\"\n\n"
+        system_inst = "You are MCP-RESQ Emergency Response AI. Start directly with the answer without preamble or self-introductions. Use bold text for key terms."
+
+        prompt = (f"User Question: \"{message}\"\n\n"
                   f"Active Emergency Info & MCP Tools Context:\n"
-                  f"{chr(10).join(context_blocks) if context_blocks else 'Response Units Status: Ambulance A-12 (ETA 7 mins), Fire Unit F-04 (ETA 9 mins), Rescue Team R-02 (ETA 5 mins)'}\n\n"
-                  f"Instructions: {directive}")
+                  f"{chr(10).join(context_blocks) if context_blocks else 'Response Units Status: Ambulance A-12 (ETA 7 mins, 2.4 km away), Fire Unit F-04 (ETA 9 mins), Rescue Team R-02 (ETA 5 mins)'}\n\n"
+                  f"Directive: {directive}")
 
-        reply_text = call_gemini_with_fallback(prompt, system_instruction=directive, max_tokens=max_tokens)
+        reply_text = call_gemini_with_fallback(prompt, system_instruction=system_inst, max_tokens=max_tokens)
         if reply_text:
             return {
                 "reply": reply_text.strip(),

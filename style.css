@@ -1121,18 +1121,28 @@ button {
 .message-content {
     background: white;
     border: 1px solid var(--border);
-    padding: 10px 13px;
-    border-radius: 10px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--dark);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.message-content strong {
+    font-weight: 700;
+    color: #1e293b;
 }
 
 .chat-message.user .message-content {
-    background: #172033;
+    background: #0f172a;
     color: white;
 }
 
-.message-content p {
-    font-size: 11px;
-    line-height: 1.6;
+.chat-message.user .message-content strong {
+    color: #38bdf8;
 }
 
 .chat-suggestions {

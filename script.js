@@ -1165,6 +1165,17 @@ async function sendChat() {
     }
 }
 
+function parseMarkdown(text) {
+    if (!text) return "";
+    let html = text
+        .replace(/^["'\s]+|["'\s]+$/g, "")
+        .replace(/^(RESQ|MCP-RESQ)\s+Emergency\s+Response\s+AI[.:"'\s]*/gi, "")
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+    return html;
+}
+
 function addChatMessage(message, sender) {
     const container = document.getElementById("chatMessages");
 
@@ -1178,10 +1189,14 @@ function addChatMessage(message, sender) {
     const content = document.createElement("div");
     content.className = "message-content";
 
-    const paragraph = document.createElement("p");
-    paragraph.textContent = message;
+    if (sender === "bot") {
+        content.innerHTML = parseMarkdown(message);
+    } else {
+        const paragraph = document.createElement("p");
+        paragraph.textContent = message;
+        content.appendChild(paragraph);
+    }
 
-    content.appendChild(paragraph);
     wrapper.appendChild(avatar);
     wrapper.appendChild(content);
 
