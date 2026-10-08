@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP-ResQ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">🛡️</div>
+            <div>
+                <h2>MCP-ResQ</h2>
+                <span>Emergency Response</span>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <p>USER</p>
+            <button class="nav-item active" data-page="home">
+                <span>🏠</span>
+                <span>Home</span>
+            </button>
+
+            <button class="nav-item" data-page="emergency">
+                <span>🚨</span>
+                <span>My Emergency</span>
+            </button>
+
+            <button class="nav-item" data-page="tracking">
+                <span>🗺️</span>
+                <span>Track Response</span>
+            </button>
+
+            <button class="nav-item" data-page="nearby">
+                <span>🏥</span>
+                <span>Nearby Help</span>
+            </button>
+
+            <button class="nav-item" data-page="assistant">
+                <span>🤖</span>
+                <span>AI Assistant</span>
+            </button>
+        </div>
+
+        <div class="nav-section control-section">
+            <p>CONTROL CENTER</p>
+
+            <button class="nav-item" data-page="control">
+                <span>🎛️</span>
+                <span>Control Center</span>
+            </button>
+
+            <button class="nav-item" data-page="resources">
+                <span>🚑</span>
+                <span>Resources</span>
+            </button>
+
+            <button class="nav-item" data-page="mcp">
+                <span>🔌</span>
+                <span>MCP Services</span>
+            </button>
+
+            <button class="nav-item" data-page="verification">
+                <span>✅</span>
+                <span>Verification</span>
+            </button>
+
+            <button class="nav-item" data-page="system">
+                <span>📊</span>
+                <span>System Status</span>
+            </button>
+        </div>
+
+        <div class="sidebar-bottom">
+            <div class="connection">
+                <span class="connection-dot" id="connectionDot"></span>
+                <span id="connectionText">Connecting...</span>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main">
+
+        <header class="topbar">
+            <div>
+                <h1 id="pageTitle">Emergency Assistance</h1>
+                <p id="pageSubtitle">Get help quickly and track your response.</p>
+            </div>
+
+            <div class="top-actions">
+                <button class="icon-button" id="notificationButton">🔔</button>
+                <div class="profile">A</div>
+            </div>
+        </header>
+
+        <div class="content">
+
+            <section class="page active" id="home">
+
+                <div class="hero">
+                    <div class="hero-content">
+                        <span class="hero-label">EMERGENCY RESPONSE SYSTEM</span>
+                        <h2>Need emergency help?</h2>
+                        <p>Tell us what happened. MCP-ResQ will identify the emergency and help coordinate the right response.</p>
+                        <button class="primary-button" data-page-target="emergency">
+                            🚨 Report Emergency
+                        </button>
+                    </div>
+                    <div class="hero-icon">🛡️</div>
+                </div>
+
+                <div class="home-grid">
+
+                    <div class="card emergency-card">
+                        <div class="card-header">
+                            <div>
+                                <h3>Quick Emergency</h3>
+                                <p>Select what you need help with.</p>
+                            </div>
+                        </div>
+
+                        <div class="emergency-types">
+                            <button class="emergency-type" data-type="medical">
+                                <span>🚑</span>
+                                <strong>Medical</strong>
+                                <small>Ambulance & hospital</small>
+                            </button>
+
+                            <button class="emergency-type" data-type="fire">
+                                <span>🔥</span>
+                                <strong>Fire</strong>
+                                <small>Fire & rescue</small>
+                            </button>
+
+                            <button class="emergency-type" data-type="accident">
+                                <span>🚗</span>
+                                <strong>Accident</strong>
+                                <small>Road emergency</small>
+                            </button>
+
+                            <button class="emergency-type" data-type="rescue">
+                                <span>🛟</span>
+                                <strong>Rescue</strong>
+                                <small>Trapped person</small>
+                            </button>
+
+                            <button class="emergency-type" data-type="disaster">
+                                <span>🌊</span>
+                                <strong>Disaster</strong>
+                                <small>Flood & natural disaster</small>
+                            </button>
+
+                            <button class="emergency-type" data-type="other">
+                                <span>⚠️</span>
+                                <strong>Other</strong>
+                                <small>Other emergency</small>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card safety-card">
+                        <div class="card-header">
+                            <div>
+                                <h3>Emergency Safety</h3>
+                                <p>Important information</p>
+                            </div>
+                            <span class="status-badge safe">READY</span>
+                        </div>
+
+                        <div class="safety-list">
+                            <div>
+                                <span>📍</span>
+                                <p>Keep your location services available.</p>
+                            </div>
+                            <div>
+                                <span>📱</span>
+                                <p>Keep your phone connected to the internet.</p>
+                            </div>
+                            <div>
+                                <span>🚨</span>
+                                <p>Follow instructions from emergency responders.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <section class="page" id="emergency">
+
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">STEP 1</span>
+                        <h2>Report an Emergency</h2>
+                        <p>Describe the situation so the system can identify the required response.</p>
+                    </div>
+                </div>
+
+                <div class="emergency-layout">
+
+                    <div class="card report-card">
+
+                        <label>What happened?</label>
+
+                        <textarea id="emergencyDescription" placeholder="Example: There has been a road accident and two people are injured..."></textarea>
+
+                        <div class="suggestions">
+                            <button data-suggestion="There has been a road accident and people are injured.">🚗 Accident</button>
+                            <button data-suggestion="There is a fire in a building and people may be trapped.">🔥 Fire</button>
+                            <button data-suggestion="Someone needs urgent medical assistance.">🚑 Medical</button>
+                            <button data-suggestion="A person is trapped and needs rescue assistance.">🛟 Rescue</button>
+                        </div>
+
+                        <div class="location-box">
+                            <div class="location-icon">📍</div>
+                            <div>
+                                <strong>Your Emergency Location</strong>
+                                <p id="locationText">Location not detected</p>
+                            </div>
+                            <button class="secondary-button" id="locationButton">Use Location</button>
+                        </div>
+
+                        <button class="primary-button large" id="detectEmergency">
+                            🚨 Detect & Request Help
+                        </button>
+
+                    </div>
+
+                    <div class="card detection-card">
+
+                        <div class="card-header">
+                            <div>
+                                <h3>Emergency Analysis</h3>
+                                <p>System response</p>
+                            </div>
+                            <span class="status-badge" id="emergencyStatus">WAITING</span>
+                        </div>
+
+                        <div class="analysis-item">
+                            <span>Emergency Type</span>
+                            <strong id="detectedType">Not detected</strong>
+                        </div>
+
+                        <div class="analysis-item">
+                            <span>Priority</span>
+                            <strong id="detectedPriority">Waiting</strong>
+                        </div>
+
+                        <div class="analysis-item">
+                            <span>Location</span>
+                            <strong id="detectedLocation">Waiting</strong>
+                        </div>
+
+                        <div class="analysis-item">
+                            <span>Emergency ID</span>
+                            <strong id="emergencyId">Not created</strong>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            <section class="page" id="tracking">
+
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">LIVE RESPONSE</span>
+                        <h2>Track Your Response</h2>
+                        <p>See where help is coming from and how far away it is.</p>
+                    </div>
+
+                    <button class="secondary-button" id="refreshTracking">↻ Refresh</button>
+                </div>
+
+                <div class="tracking-grid">
+
+                    <div class="card map-card">
+
+                        <div class="map-header">
+                            <div>
+                                <h3>Response Map <small style="font-weight:400; color:var(--muted); font-size:11px;">(Click map to relocate victim)</small></h3>
+                                <p id="mapStatus">Waiting for emergency response</p>
+                            </div>
+
+                            <div class="map-header-actions" style="display:flex; gap:10px; align-items:center;">
+                                <span class="live-badge">
+                                    <span></span> LIVE
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="map-unit-selector" id="unitSelectorBar">
+                            <button class="unit-chip active" data-unit-id="AMB-101" data-type="ambulance" data-name="Ambulance A-12 (ALS)" data-dist="2.4" data-eta="7">🚑 Ambulance A-12</button>
+                            <button class="unit-chip" data-unit-id="FIRE-201" data-type="fire" data-name="Fire Tender F-04" data-dist="3.1" data-eta="9">🔥 Fire Tender F-04</button>
+                            <button class="unit-chip" data-unit-id="RES-301" data-type="rescue" data-name="Rescue Squad R-02" data-dist="1.8" data-eta="5">🛟 Rescue Squad R-02</button>
+                            <button class="unit-chip" data-unit-id="POL-101" data-type="police" data-name="Police Patrol P-101" data-dist="2.7" data-eta="6">🚔 Police Patrol P-101</button>
+                        </div>
+
+                        <div class="map" id="responseMap">
+
+                            <!-- Google Maps JS Container (active when Google Maps API is initialized) -->
+                            <div id="googleMapCanvas" style="width:100%; height:100%; position:absolute; top:0; left:0; display:none; z-index:1;"></div>
+
+                            <!-- Simulated Interactive Google Map Layer -->
+                            <div class="map-simulation-layer" id="mapSimulationLayer">
+                                <svg class="map-route-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                    <path id="routePath" d="M 20 25 Q 45 40 70 70" stroke="#e53935" stroke-width="2.5" stroke-dasharray="3,2" fill="none" />
+                                </svg>
+
+                                <div class="road road-one"></div>
+                                <div class="road road-two"></div>
+                                <div class="road road-three"></div>
+                                <div class="road road-four"></div>
+
+                                <!-- Hazard Zone Overlay -->
+                                <div class="hazard-zone-radius" id="hazardZoneOverlay" style="left:70%; top:70%; display:none;"></div>
+
+                                <div class="map-marker user-marker" id="userMarker" style="left:70%; top:70%;">
+                                    <div class="user-pulse"></div>
+                                    📍
+                                    <span id="userMarkerLabel">Victim (You)</span>
+                                </div>
+
+                                <div class="map-marker response-marker" id="responseMarker" style="left:20%; top:25%; cursor:pointer;">
+                                    <div class="vehicle-icon" id="vehicleIcon">🚑</div>
+                                    <span id="vehicleLabel">Ambulance A-12</span>
+                                    <div class="marker-popover" id="vehiclePopover">
+                                        <strong id="popoverTitle">Ambulance A-12 (ALS)</strong><br>
+                                        <span id="popoverEquipment">Defibrillator • O2 • Ventilator</span>
+                                    </div>
+                                </div>
+
+                                <div class="map-marker hospital-marker" id="hospitalMarker" style="left:82%; top:20%; cursor:pointer;">
+                                    🏥
+                                    <span>City Trauma ER</span>
+                                    <div class="marker-popover" id="hospitalPopover">
+                                        <strong>City Emergency Hospital</strong><br>
+                                        <span>Level 1 Trauma • 14 ER Beds Free</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="map-controls">
+                            <button id="toggleAnim" title="Pause / Resume Live Movement">⏸️</button>
+                            <button id="speedAnim" title="Simulation Speed">1x</button>
+                            <button id="toggleHazardBtn" title="Toggle Hazard Perimeter Overlay">⚠️</button>
+                            <button id="resetAnim" title="Reset Vehicle Route">🔄</button>
+                            <button id="gmapsToggleBtn" title="Google Maps Settings">🗺️</button>
+                        </div>
+
+                    </div>
+
+                    <div class="card response-card">
+
+                        <div class="response-header">
+                            <div class="response-icon" id="responseIcon">🚑</div>
+                            <div>
+                                <span class="status-badge responding" id="responseStatus">WAITING</span>
+                                <h3 id="responseName">Emergency Response</h3>
+                            </div>
+                        </div>
+
+                        <div class="distance-display">
+                            <strong id="responseDistance">--</strong>
+                            <span>away</span>
+                        </div>
+
+                        <div class="eta-box">
+                            <span>Estimated arrival</span>
+                            <strong id="responseEta">-- min</strong>
+                        </div>
+
+                        <div class="progress-container">
+                            <div class="progress-label">
+                                <span>Response progress</span>
+                                <strong id="responseProgressText">0%</strong>
+                            </div>
+                            <div class="progress">
+                                <div id="responseProgress"></div>
+                            </div>
+                        </div>
+
+                        <div class="response-details">
+                            <div>
+                                <span>📍 Coming from</span>
+                                <strong id="responseFrom">Waiting</strong>
+                            </div>
+                            <div>
+                                <span>🎯 Destination</span>
+                                <strong id="responseDestination">Your location</strong>
+                            </div>
+                            <div>
+                                <span>🕐 Last updated</span>
+                                <strong id="trackingUpdated">--</strong>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            <section class="page" id="nearby">
+
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">NEARBY ASSISTANCE</span>
+                        <h2>Nearby Help</h2>
+                        <p>Find hospitals, fire stations, police and rescue services around you.</p>
+                    </div>
+
+                    <button class="secondary-button" id="refreshNearby">↻ Refresh</button>
+                </div>
+
+                <div class="filter-row">
+                    <button class="filter-button active" data-filter="all">All</button>
+                    <button class="filter-button" data-filter="hospital">🏥 Hospitals</button>
+                    <button class="filter-button" data-filter="fire">🔥 Fire Stations</button>
+                    <button class="filter-button" data-filter="police">🚓 Police</button>
+                    <button class="filter-button" data-filter="rescue">🛟 Rescue</button>
+                </div>
+
+                <div class="nearby-grid" id="nearbyList"></div>
+
+            </section>
+
+            <section class="page" id="assistant">
+
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">AI ASSISTANT</span>
+                        <h2>MCP-ResQ Assistant</h2>
+                        <p>Ask questions about your emergency and response.</p>
+                    </div>
+                </div>
+
+                <div class="chat-container card">
+
+                    <div class="chat-header">
+                        <div class="assistant-avatar">🤖</div>
+                        <div>
+                            <h3>MCP-ResQ AI</h3>
+                            <span>Emergency assistance</span>
+                        </div>
+                        <span class="status-badge ai-status">ONLINE</span>
+                    </div>
+
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="chat-message bot">
+                            <div class="message-avatar">🤖</div>
+                            <div class="message-content">
+                                <p>Hello. I can help you understand your emergency response, nearby assistance, ambulance status, hospital information and more.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chat-suggestions">
+                        <button data-chat="Where is the ambulance?">🚑 Where is the ambulance?</button>
+                        <button data-chat="Which hospital is nearest?">🏥 Nearest hospital?</button>
+                        <button data-chat="How long will help take?">⏱️ How long will help take?</button>
+                    </div>
+
+                    <div class="chat-input">
+                        <input type="text" id="chatInput" placeholder="Ask MCP-ResQ...">
+                        <button id="sendChat">➤</button>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <section class="page" id="control">
+
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">OPERATOR VIEW</span>
+                        <h2>Control Center</h2>
+                        <p>Operational information for emergency coordinators.</p>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+
+                    <div class="stat-card">
+                        <span>🚑</span>
+                        <div>
+                            <small>Available Ambulances</small>
+                            <strong id="availableAmbulances">--</strong>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <span>🔥</span>
+                        <div>
+                            <small>Available Fire Units</small>
+                            <strong id="availableFireUnits">--</strong>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <span>🛟</span>
+                        <div>
+                            <small>Rescue Teams</small>
+                            <strong id="availableRescue">--</strong>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <span>🏥</span>
+                        <div>
+                            <small>Hospitals</small>
+                            <strong id="hospitalCount">--</strong>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="control-grid">
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h3>Active Emergency</h3>
+                                <p>Current operation</p>
+                            </div>
+                        </div>
+
+                        <div class="operator-data">
+                            <div><span>ID</span><strong id="controlEmergencyId">--</strong></div>
+                            <div><span>Type</span><strong id="controlEmergencyType">--</strong></div>
+                            <div><span>Priority</span><strong id="controlEmergencyPriority">--</strong></div>
+                            <div><span>Status</span><strong id="controlEmergencyStatus">--</strong></div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h3>System Activity</h3>
+                                <p>Latest response events</p>
+                            </div>
+                        </div>
+
+                        <div class="activity-list" id="activityList">
+                            <div class="activity-item">
+                                <span>🟢</span>
+                                <div>
+                                    <strong>System initialized</strong>
+                                    <small>Waiting for emergency</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <section class="page" id="resources">
+
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">RESOURCE MANAGEMENT</span>
+                        <h2>Emergency Resources</h2>
+                        <p>Monitor and coordinate emergency response units.</p>
+                    </div>
+
+                    <button class="secondary-button" id="refreshResources">↻ Refresh</button>
+                </div>
+
+                <div class="resource-tabs">
+                    <button class="resource-tab active" data-resource="all">All</button>
+                    <button class="resource-tab" data-resource="ambulance">🚑 Ambulances</button>
+                    <button class="resource-tab" data-resource="fire">🔥 Fire Units</button>
+                    <button class="resource-tab" data-resource="rescue">🛟 Rescue</button>
+                </div>
+
+                <div class="resource-table card">
+                    <div class="table-header">
+                        <span>Unit</span>
+                        <span>Type</span>
+                        <span>Status</span>
+                        <span>Location</span>
+                        <span>Action</span>
+                    </div>
+
+                    <div id="resourceList"></div>
+                </div>
+
+            </section>
+
+            <section class="page" id="mcp">
+
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">MODEL CONTEXT PROTOCOL</span>
+                        <h2>MCP Services</h2>
+                        <p>Services used to connect AI reasoning with emergency resources.</p>
+                    </div>
+                </div>
+
+                <div class="mcp-grid">
+
+                    <div class="mcp-card">
+                        <span>📍</span>
+                        <h3>Location Service</h3>
+                        <p>Provides emergency and responder location information.</p>
+                        <span class="service-status" id="locationServiceStatus">READY</span>
+                        <button data-service="location">Test Service</button>
+                    </div>
+
+                    <div class="mcp-card">
+                        <span>🚑</span>
+                        <h3>Resource Service</h3>
+                        <p>Finds available emergency units.</p>
+                        <span class="service-status" id="resourceServiceStatus">READY</span>
+                        <button data-service="resource">Test Service</button>
+                    </div>
+
+                    <div class="mcp-card">
+                        <span>🏥</span>
+                        <h3>Hospital Service</h3>
+                        <p>Provides nearby hospital information.</p>
+                        <span class="service-status" id="hospitalServiceStatus">READY</span>
+                        <button data-service="hospital">Test Service</button>
+                    </div>
+
+                    <div class="mcp-card">
+                        <span>✅</span>
+                        <h3>Verification Service</h3>
+                        <p>Validates emergency and response data.</p>
+                        <span class="service-status" id="verificationServiceStatus">READY</span>
+                        <button data-service="verification">Test Service</button>
+                    </div>
+
+                </div>
+
+                <div class="card mcp-log-card">
+                    <div class="card-header">
+                        <div>
+                            <h3>MCP Activity</h3>
+                            <p>Communication between services</p>
+                        </div>
+                    </div>
+
+                    <div class="mcp-log" id="mcpLog"></div>
+                </div>
+
+            </section>
+
+            <section class="page" id="verification">
+
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">DATA VERIFICATION</span>
+                        <h2>Verification</h2>
+                        <p>Validate emergency and resource information before coordination.</p>
+                    </div>
+
+                    <button class="primary-button" id="verifyEmergency">✓ Verify Current Emergency</button>
+                </div>
+
+                <div class="verification-grid">
+
+                    <div class="verification-card">
+                        <span>📍</span>
+                        <div>
+                            <small>Location</small>
+                            <strong id="verifyLocation">Not verified</strong>
+                        </div>
+                    </div>
+
+                    <div class="verification-card">
+                        <span>🚨</span>
+                        <div>
+                            <small>Emergency</small>
+                            <strong id="verifyEmergencyType">Not verified</strong>
+                        </div>
+                    </div>
+
+                    <div class="verification-card">
+                        <span>🚑</span>
+                        <div>
+                            <small>Resources</small>
+                            <strong id="verifyResources">Not verified</strong>
+                        </div>
+                    </div>
+
+                    <div class="verification-card">
+                        <span>🤖</span>
+                        <div>
+                            <small>AI Decision</small>
+                            <strong id="verifyAI">Not verified</strong>
+                        </div>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <section class="page" id="system">
+
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">SYSTEM MONITORING</span>
+                        <h2>System Status</h2>
+                        <p>Technical status of MCP-ResQ services.</p>
+                    </div>
+                </div>
+
+                <div class="system-grid">
+
+                    <div class="system-card">
+                        <div class="system-icon">⚡</div>
+                        <div>
+                            <h3>Frontend</h3>
+                            <p>User interface</p>
+                        </div>
+                        <span class="system-online">ONLINE</span>
+                    </div>
+
+                    <div class="system-card">
+                        <div class="system-icon">🐍</div>
+                        <div>
+                            <h3>FastAPI Backend</h3>
+                            <p>API communication</p>
+                        </div>
+                        <span class="system-online" id="backendStatus">CHECKING</span>
+                    </div>
+
+                    <div class="system-card">
+                        <div class="system-icon">🔌</div>
+                        <div>
+                            <h3>MCP</h3>
+                            <p>Service connectivity</p>
+                        </div>
+                        <span class="system-online">READY</span>
+                    </div>
+
+                    <div class="system-card">
+                        <div class="system-icon">🗄️</div>
+                        <div>
+                            <h3>Database</h3>
+                            <p>Emergency data</p>
+                        </div>
+                        <span class="system-online">READY</span>
+                    </div>
+
+                </div>
+
+            </section>
+
+        </div>
+    </main>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="script.js"></script>
+</body>
+</html>

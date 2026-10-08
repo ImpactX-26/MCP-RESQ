@@ -1,0 +1,17 @@
+# Secrets & Environment Variables
+.env
+*.env
+backend/.env
+backend/.env.local
+
+# Python cache & bytecode
+__pycache__/
+*.pyc
+backend/__pycache__/
+
+# Logs & temporary files
+*.log
+scratch/
+.DS_Store
+.idea/
+.vscode/
