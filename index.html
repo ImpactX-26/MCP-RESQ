@@ -289,43 +289,76 @@
 
                         <div class="map-header">
                             <div>
-                                <h3>Response Map</h3>
+                                <h3>Response Map <small style="font-weight:400; color:var(--muted); font-size:11px;">(Click map to relocate victim)</small></h3>
                                 <p id="mapStatus">Waiting for emergency response</p>
                             </div>
 
-                            <span class="live-badge">
-                                <span></span> LIVE
-                            </span>
+                            <div class="map-header-actions" style="display:flex; gap:10px; align-items:center;">
+                                <span class="live-badge">
+                                    <span></span> LIVE
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="map-unit-selector" id="unitSelectorBar">
+                            <button class="unit-chip active" data-unit-id="AMB-101" data-type="ambulance" data-name="Ambulance A-12 (ALS)" data-dist="2.4" data-eta="7">🚑 Ambulance A-12</button>
+                            <button class="unit-chip" data-unit-id="FIRE-201" data-type="fire" data-name="Fire Tender F-04" data-dist="3.1" data-eta="9">🔥 Fire Tender F-04</button>
+                            <button class="unit-chip" data-unit-id="RES-301" data-type="rescue" data-name="Rescue Squad R-02" data-dist="1.8" data-eta="5">🛟 Rescue Squad R-02</button>
+                            <button class="unit-chip" data-unit-id="POL-101" data-type="police" data-name="Police Patrol P-101" data-dist="2.7" data-eta="6">🚔 Police Patrol P-101</button>
                         </div>
 
                         <div class="map" id="responseMap">
 
-                            <div class="road road-one"></div>
-                            <div class="road road-two"></div>
-                            <div class="road road-three"></div>
-                            <div class="road road-four"></div>
+                            <!-- Google Maps JS Container (active when Google Maps API is initialized) -->
+                            <div id="googleMapCanvas" style="width:100%; height:100%; position:absolute; top:0; left:0; display:none; z-index:1;"></div>
 
-                            <div class="map-marker user-marker" id="userMarker">
-                                📍
-                                <span>You</span>
-                            </div>
+                            <!-- Simulated Interactive Google Map Layer -->
+                            <div class="map-simulation-layer" id="mapSimulationLayer">
+                                <svg class="map-route-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                    <path id="routePath" d="M 20 25 Q 45 40 70 70" stroke="#e53935" stroke-width="2.5" stroke-dasharray="3,2" fill="none" />
+                                </svg>
 
-                            <div class="map-marker response-marker" id="responseMarker">
-                                🚑
-                                <span>Help</span>
-                            </div>
+                                <div class="road road-one"></div>
+                                <div class="road road-two"></div>
+                                <div class="road road-three"></div>
+                                <div class="road road-four"></div>
 
-                            <div class="map-marker hospital-marker">
-                                🏥
-                                <span>Hospital</span>
+                                <!-- Hazard Zone Overlay -->
+                                <div class="hazard-zone-radius" id="hazardZoneOverlay" style="left:70%; top:70%; display:none;"></div>
+
+                                <div class="map-marker user-marker" id="userMarker" style="left:70%; top:70%;">
+                                    <div class="user-pulse"></div>
+                                    📍
+                                    <span id="userMarkerLabel">Victim (You)</span>
+                                </div>
+
+                                <div class="map-marker response-marker" id="responseMarker" style="left:20%; top:25%; cursor:pointer;">
+                                    <div class="vehicle-icon" id="vehicleIcon">🚑</div>
+                                    <span id="vehicleLabel">Ambulance A-12</span>
+                                    <div class="marker-popover" id="vehiclePopover">
+                                        <strong id="popoverTitle">Ambulance A-12 (ALS)</strong><br>
+                                        <span id="popoverEquipment">Defibrillator • O2 • Ventilator</span>
+                                    </div>
+                                </div>
+
+                                <div class="map-marker hospital-marker" id="hospitalMarker" style="left:82%; top:20%; cursor:pointer;">
+                                    🏥
+                                    <span>City Trauma ER</span>
+                                    <div class="marker-popover" id="hospitalPopover">
+                                        <strong>City Emergency Hospital</strong><br>
+                                        <span>Level 1 Trauma • 14 ER Beds Free</span>
+                                    </div>
+                                </div>
                             </div>
 
                         </div>
 
                         <div class="map-controls">
-                            <button id="zoomIn">+</button>
-                            <button id="zoomOut">−</button>
-                            <button id="resetMap">⌾</button>
+                            <button id="toggleAnim" title="Pause / Resume Live Movement">⏸️</button>
+                            <button id="speedAnim" title="Simulation Speed">1x</button>
+                            <button id="toggleHazardBtn" title="Toggle Hazard Perimeter Overlay">⚠️</button>
+                            <button id="resetAnim" title="Reset Vehicle Route">🔄</button>
+                            <button id="gmapsToggleBtn" title="Google Maps Settings">🗺️</button>
                         </div>
 
                     </div>

@@ -1,4 +1,6 @@
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = (typeof window !== "undefined" && window.location && window.location.origin && window.location.origin.startsWith("http")) 
+    ? window.location.origin 
+    : "http://127.0.0.1:8000";
 
 const state = {
     backendConnected: false,
@@ -164,18 +166,30 @@ async function apiRequest(endpoint, options = {}) {
 
 async function checkBackend() {
     try {
-        await apiRequest("/api/health");
+        let res;
+        try {
+            res = await apiRequest("/api/health");
+        } catch (e1) {
+            // Fallback attempt to http://127.0.0.1:8000/api/health directly
+            const rawRes = await fetch("http://127.0.0.1:8000/api/health", { signal: AbortSignal.timeout(3000) });
+            res = await rawRes.json();
+        }
 
-        state.backendConnected = true;
-
-        updateConnectionUI();
-        addMCPLog("FastAPI backend connected", true);
+        if (res && (res.status === "ok" || res.backend_connected)) {
+            if (!state.backendConnected) {
+                state.backendConnected = true;
+                updateConnectionUI();
+                addMCPLog("FastAPI backend connected", true);
+            }
+        } else {
+            throw new Error("Invalid health response");
+        }
 
     } catch (error) {
         state.backendConnected = false;
-
         updateConnectionUI();
-        addMCPLog("Backend unavailable - demo mode active", false);
+        // Schedule retry after 4 seconds
+        setTimeout(checkBackend, 4000);
     }
 }
 
@@ -287,9 +301,21 @@ function classifyEmergency(text) {
     const value = text.toLowerCase();
 
     if (
+        value.includes("gas") ||
+        value.includes("leak") ||
+        value.includes("chemical") ||
+        value.includes("toxic") ||
+        value.includes("hazard") ||
+        value.includes("propane")
+    ) {
+        return "gas";
+    }
+
+    if (
         value.includes("fire") ||
         value.includes("burning") ||
-        value.includes("smoke")
+        value.includes("smoke") ||
+        value.includes("flame")
     ) {
         return "fire";
     }
@@ -306,7 +332,9 @@ function classifyEmergency(text) {
         value.includes("ambulance") ||
         value.includes("injured") ||
         value.includes("medical") ||
-        value.includes("unconscious")
+        value.includes("unconscious") ||
+        value.includes("bleed") ||
+        value.includes("chok")
     ) {
         return "medical";
     }
@@ -458,6 +486,371 @@ function updateEmergencyFromBackend(emergency) {
         getEmergencyName(emergency.type);
 }
 
+// --- LIVE TRACKING & GOOGLE MAPS ANIMATION ENGINE ---
+const trackingAnim = {
+    timer: null,
+    isPlaying: true,
+    speed: 1,
+    progress: 20,
+    initialDistance: 3.5,
+    initialEta: 8,
+    unitName: "Ambulance A-12",
+    unitType: "ambulance",
+    gmapsApiKey: "",
+    gmap: null,
+    gmapResponderMarker: null,
+    gmapVictimMarker: null,
+    gmapPolyline: null,
+    responderCoords: { lat: 13.0827, lng: 77.5877 },
+    victimCoords: { lat: 12.9716, lng: 77.5946 }
+};
+
+function initMapTrackingControls() {
+    const toggleBtn = document.getElementById("toggleAnim");
+    const speedBtn = document.getElementById("speedAnim");
+    const resetBtn = document.getElementById("resetAnim");
+    const gmapsBtn = document.getElementById("gmapsToggleBtn");
+    const hazardBtn = document.getElementById("toggleHazardBtn");
+    const responseMap = document.getElementById("responseMap");
+    const unitBar = document.getElementById("unitSelectorBar");
+
+    if (toggleBtn) {
+        toggleBtn.onclick = () => {
+            trackingAnim.isPlaying = !trackingAnim.isPlaying;
+            toggleBtn.textContent = trackingAnim.isPlaying ? "⏸️" : "▶️";
+            toggleBtn.classList.toggle("active", !trackingAnim.isPlaying);
+            showNotification(trackingAnim.isPlaying ? "Response movement resumed." : "Response movement paused.");
+        };
+    }
+
+    if (speedBtn) {
+        speedBtn.onclick = () => {
+            if (trackingAnim.speed === 1) trackingAnim.speed = 2;
+            else if (trackingAnim.speed === 2) trackingAnim.speed = 5;
+            else trackingAnim.speed = 1;
+            speedBtn.textContent = `${trackingAnim.speed}x`;
+            showNotification(`Tracking animation speed set to ${trackingAnim.speed}x`);
+        };
+    }
+
+    if (hazardBtn) {
+        hazardBtn.onclick = () => {
+            const overlay = document.getElementById("hazardZoneOverlay");
+            if (overlay) {
+                const isHidden = overlay.style.display === "none";
+                overlay.style.display = isHidden ? "block" : "none";
+                hazardBtn.classList.toggle("layer-active", isHidden);
+                showNotification(isHidden ? "⚠️ Hazard perimeter risk radius visible." : "Hazard overlay hidden.");
+            }
+        };
+    }
+
+    if (resetBtn) {
+        resetBtn.onclick = () => {
+            trackingAnim.progress = 0;
+            trackingAnim.isPlaying = true;
+            if (toggleBtn) {
+                toggleBtn.textContent = "⏸️";
+                toggleBtn.classList.remove("active");
+            }
+            const statusBadge = document.getElementById("responseStatus");
+            if (statusBadge) {
+                statusBadge.textContent = "EN ROUTE";
+                statusBadge.className = "status-badge responding";
+            }
+            startVehicleTrackingAnimation();
+            showNotification("Reset vehicle route animation to 0%.");
+        };
+    }
+
+    if (gmapsBtn) {
+        gmapsBtn.onclick = () => {
+            promptGoogleMapsApiKey();
+        };
+    }
+
+    // --- Interactive Unit Selector Chips ---
+    if (unitBar) {
+        const chips = unitBar.querySelectorAll(".unit-chip");
+        chips.forEach(chip => {
+            chip.onclick = (e) => {
+                chips.forEach(c => c.classList.remove("active"));
+                chip.classList.add("active");
+
+                const unitName = chip.getAttribute("data-name");
+                const unitType = chip.getAttribute("data-type");
+                const dist = Number(chip.getAttribute("data-dist")) || 3.0;
+                const eta = Number(chip.getAttribute("data-eta")) || 7;
+
+                trackingAnim.unitName = unitName;
+                trackingAnim.unitType = unitType;
+                trackingAnim.initialDistance = dist;
+                trackingAnim.initialEta = eta;
+                trackingAnim.progress = 0;
+                trackingAnim.isPlaying = true;
+
+                const vehicleIconEl = document.getElementById("vehicleIcon");
+                const vehicleLabelEl = document.getElementById("vehicleLabel");
+                const popTitle = document.getElementById("popoverTitle");
+                const popEquip = document.getElementById("popoverEquipment");
+
+                if (vehicleIconEl) vehicleIconEl.textContent = getVehicleIcon(unitType);
+                if (vehicleLabelEl) vehicleLabelEl.textContent = unitName;
+                if (popTitle) popTitle.textContent = unitName;
+                if (popEquip) {
+                    if (unitType === "fire") popEquip.textContent = "Water Cannon • Thermal Camera • Ladders";
+                    else if (unitType === "rescue") popEquip.textContent = "Jaws of Life • Search Drone • Rope Rescue";
+                    else if (unitType === "police") popEquip.textContent = "Patrol Cruiser • Traffic Control • SWAT";
+                    else popEquip.textContent = "Defibrillator • Oxygen • Ventilator";
+                }
+
+                document.getElementById("responseName").textContent = unitName;
+                document.getElementById("responseIcon").textContent = getVehicleIcon(unitType);
+
+                const statusBadge = document.getElementById("responseStatus");
+                if (statusBadge) {
+                    statusBadge.textContent = "EN ROUTE";
+                    statusBadge.className = "status-badge responding";
+                }
+
+                startVehicleTrackingAnimation();
+                showNotification(`Dispatched & tracking ${unitName}`);
+            };
+        });
+    }
+
+    // --- Interactive Click Map to Set Victim Coordinates ---
+    if (responseMap) {
+        responseMap.onclick = (e) => {
+            // Ignore if clicked directly on marker popover or controls
+            if (e.target.closest(".map-controls") || e.target.closest(".marker-popover")) return;
+
+            const rect = responseMap.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+
+            const pctX = Math.round(Math.max(10, Math.min(90, (clickX / rect.width) * 100)));
+            const pctY = Math.round(Math.max(10, Math.min(90, (clickY / rect.height) * 100)));
+
+            // Relocate Victim Marker
+            const userMarker = document.getElementById("userMarker");
+            const hazardOverlay = document.getElementById("hazardZoneOverlay");
+
+            if (userMarker) {
+                userMarker.style.left = `${pctX}%`;
+                userMarker.style.top = `${pctY}%`;
+            }
+
+            if (hazardOverlay) {
+                hazardOverlay.style.left = `${pctX}%`;
+                hazardOverlay.style.top = `${pctY}%`;
+            }
+
+            // Update SVG Route Path
+            const routePath = document.getElementById("routePath");
+            if (routePath) {
+                const midX = (20 + pctX) / 2;
+                const midY = (25 + pctY) / 2;
+                routePath.setAttribute("d", `M 20 25 Q ${midX} ${midY} ${pctX} ${pctY}`);
+            }
+
+            // Update state
+            trackingAnim.victimPos = { x: pctX, y: pctY };
+            trackingAnim.progress = 0;
+
+            document.getElementById("locationText").textContent = `Sector (${pctX}°, ${pctY}°)`;
+            document.getElementById("detectedLocation").textContent = `Map Point (${pctX}%, ${pctY}%)`;
+
+            startVehicleTrackingAnimation();
+            showNotification(`📍 Relocated emergency victim marker to Sector (${pctX}%, ${pctY}%). Vehicle rerouted.`);
+        };
+    }
+
+    // --- Marker Tooltip Popovers ---
+    const vehicleMarker = document.getElementById("responseMarker");
+    const hospitalMarker = document.getElementById("hospitalMarker");
+    const vehiclePopover = document.getElementById("vehiclePopover");
+    const hospitalPopover = document.getElementById("hospitalPopover");
+
+    if (vehicleMarker && vehiclePopover) {
+        vehicleMarker.onclick = (e) => {
+            e.stopPropagation();
+            const isVis = vehiclePopover.style.display === "block";
+            vehiclePopover.style.display = isVis ? "none" : "block";
+        };
+    }
+
+    if (hospitalMarker && hospitalPopover) {
+        hospitalMarker.onclick = (e) => {
+            e.stopPropagation();
+            const isVis = hospitalPopover.style.display === "block";
+            hospitalPopover.style.display = isVis ? "none" : "block";
+        };
+    }
+}
+
+function promptGoogleMapsApiKey() {
+    const key = prompt("Enter your Google Maps JavaScript API Key:\n(Leave empty to use simulated interactive Google Map view)", trackingAnim.gmapsApiKey);
+    if (key !== null) {
+        trackingAnim.gmapsApiKey = key.trim();
+        if (trackingAnim.gmapsApiKey) {
+            loadGoogleMapsScript(trackingAnim.gmapsApiKey);
+        } else {
+            showNotification("Switched to Simulated Interactive Map.");
+            const gCanvas = document.getElementById("googleMapCanvas");
+            const simLayer = document.getElementById("mapSimulationLayer");
+            if (gCanvas) gCanvas.style.display = "none";
+            if (simLayer) simLayer.style.display = "block";
+        }
+    }
+}
+
+function loadGoogleMapsScript(apiKey) {
+    if (window.google && window.google.maps) {
+        initGoogleMapInstance();
+        return;
+    }
+
+    showNotification("Loading Google Maps JS API...");
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=onGoogleMapsLoaded`;
+    script.async = true;
+    script.defer = true;
+    script.onerror = () => {
+        showNotification("Could not load Google Maps API. Using Simulated Interactive Map.", "error");
+    };
+    document.head.appendChild(script);
+}
+
+window.onGoogleMapsLoaded = function() {
+    showNotification("Google Maps API loaded successfully!");
+    initGoogleMapInstance();
+};
+
+function initGoogleMapInstance() {
+    const container = document.getElementById("googleMapCanvas");
+    const simLayer = document.getElementById("mapSimulationLayer");
+    if (!container) return;
+
+    container.style.display = "block";
+    if (simLayer) simLayer.style.display = "none";
+
+    const victimLatLng = trackingAnim.victimCoords;
+    const responderLatLng = trackingAnim.responderCoords;
+
+    trackingAnim.gmap = new google.maps.Map(container, {
+        zoom: 13,
+        center: {
+            lat: (victimLatLng.lat + responderLatLng.lat) / 2,
+            lng: (victimLatLng.lng + responderLatLng.lng) / 2
+        },
+        styles: [
+            { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+            { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+            { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+            { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }] },
+            { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] }
+        ]
+    });
+
+    trackingAnim.gmapVictimMarker = new google.maps.Marker({
+        position: victimLatLng,
+        map: trackingAnim.gmap,
+        title: "Victim Location",
+        label: "📍"
+    });
+
+    trackingAnim.gmapResponderMarker = new google.maps.Marker({
+        position: responderLatLng,
+        map: trackingAnim.gmap,
+        title: trackingAnim.unitName,
+        label: getVehicleIcon(trackingAnim.unitType)
+    });
+
+    trackingAnim.gmapPolyline = new google.maps.Polyline({
+        path: [responderLatLng, victimLatLng],
+        geodesic: true,
+        strokeColor: "#E53935",
+        strokeOpacity: 0.9,
+        strokeWeight: 4,
+        map: trackingAnim.gmap
+    });
+}
+
+function getVehicleIcon(type) {
+    if (type === "fire") return "🚒";
+    if (type === "gas" || type === "hazmat" || type === "chemical") return "☣️";
+    if (type === "rescue") return "🛟";
+    if (type === "police") return "🚔";
+    return "🚑";
+}
+
+function startVehicleTrackingAnimation() {
+    if (trackingAnim.timer) {
+        clearInterval(trackingAnim.timer);
+    }
+
+    trackingAnim.timer = setInterval(() => {
+        if (!trackingAnim.isPlaying) return;
+
+        if (trackingAnim.progress < 100) {
+            trackingAnim.progress += 0.4 * trackingAnim.speed;
+        }
+
+        if (trackingAnim.progress >= 100) {
+            trackingAnim.progress = 100;
+            const statusBadge = document.getElementById("responseStatus");
+            if (statusBadge) {
+                statusBadge.textContent = "ARRIVED";
+                statusBadge.className = "status-badge safe";
+            }
+            showNotification(`🚨 ${trackingAnim.unitName} has arrived at your location!`);
+            clearInterval(trackingAnim.timer);
+        }
+
+        const p = trackingAnim.progress / 100;
+
+        // Quadratic Bezier interpolation matching SVG M 20 25 Q 45 40 70 70
+        const p0 = { x: 20, y: 25 };
+        const p1 = { x: 45, y: 40 };
+        const p2 = { x: 70, y: 70 };
+
+        const currentX = (1-p)*(1-p)*p0.x + 2*(1-p)*p*p1.x + p*p*p2.x;
+        const currentY = (1-p)*(1-p)*p0.y + 2*(1-p)*p*p1.y + p*p*p2.y;
+
+        const resMarker = document.getElementById("responseMarker");
+        if (resMarker) {
+            resMarker.style.left = `${currentX}%`;
+            resMarker.style.top = `${currentY}%`;
+        }
+
+        const remainingDist = Math.max(0, trackingAnim.initialDistance * (1 - p)).toFixed(1);
+        const remainingEta = Math.max(0, Math.ceil(trackingAnim.initialEta * (1 - p)));
+
+        document.getElementById("responseDistance").textContent = trackingAnim.progress >= 100 ? "0.0 km (Arrived)" : `${remainingDist} km`;
+        document.getElementById("responseEta").textContent = trackingAnim.progress >= 100 ? "0 min (Arrived)" : `${remainingEta} min`;
+        document.getElementById("responseProgress").style.width = `${Math.floor(trackingAnim.progress)}%`;
+        document.getElementById("responseProgressText").textContent = `${Math.floor(trackingAnim.progress)}%`;
+        
+        document.getElementById("mapStatus").textContent = trackingAnim.progress >= 100
+            ? `${trackingAnim.unitName} has arrived`
+            : `${trackingAnim.unitName} is ${remainingDist} km away • ETA ${remainingEta} min`;
+
+        // Update Google Maps marker position if active
+        if (trackingAnim.gmap && trackingAnim.gmapResponderMarker) {
+            const startLat = trackingAnim.responderCoords.lat;
+            const startLng = trackingAnim.responderCoords.lng;
+            const endLat = trackingAnim.victimCoords.lat;
+            const endLng = trackingAnim.victimCoords.lng;
+
+            const curLat = startLat + (endLat - startLat) * p;
+            const curLng = startLng + (endLng - startLng) * p;
+
+            trackingAnim.gmapResponderMarker.setPosition({ lat: curLat, lng: curLng });
+        }
+    }, 250);
+}
+
 async function loadTracking() {
     if (!state.emergency?.id) {
         return;
@@ -477,10 +870,11 @@ async function loadTracking() {
 
         state.tracking = {
             unit_name: unit.name,
+            unit_type: unit.type,
             distance_km: unit.distance_km,
             eta_minutes: unit.eta_minutes,
             status: "en_route",
-            progress: 65,
+            progress: 20,
             from: unit.location,
             destination: "Your location",
             updated_at: new Date().toISOString()
@@ -509,18 +903,19 @@ function updateTrackingUI(tracking) {
         return;
     }
 
-    document.getElementById("responseName").textContent =
-        tracking.unit_name || tracking.name || "Emergency Response";
+    trackingAnim.unitName = tracking.unit_name || tracking.name || "Emergency Response";
+    trackingAnim.unitType = tracking.unit_type || state.emergency?.type || "ambulance";
+    trackingAnim.initialDistance = Number(tracking.distance_km) || 3.5;
+    trackingAnim.initialEta = Number(tracking.eta_minutes) || 8;
+    trackingAnim.progress = Number(tracking.progress || 20);
 
-    document.getElementById("responseDistance").textContent =
-        tracking.distance_km !== undefined
-            ? `${Number(tracking.distance_km).toFixed(1)} km`
-            : "--";
+    const vehicleIconEl = document.getElementById("vehicleIcon");
+    const vehicleLabelEl = document.getElementById("vehicleLabel");
+    if (vehicleIconEl) vehicleIconEl.textContent = getVehicleIcon(trackingAnim.unitType);
+    if (vehicleLabelEl) vehicleLabelEl.textContent = trackingAnim.unitName;
 
-    document.getElementById("responseEta").textContent =
-        tracking.eta_minutes !== undefined
-            ? `${tracking.eta_minutes} min`
-            : "--";
+    document.getElementById("responseName").textContent = trackingAnim.unitName;
+    document.getElementById("responseIcon").textContent = getVehicleIcon(trackingAnim.unitType);
 
     document.getElementById("responseFrom").textContent =
         tracking.from || tracking.location || "Responder location";
@@ -528,19 +923,15 @@ function updateTrackingUI(tracking) {
     document.getElementById("responseDestination").textContent =
         tracking.destination || "Your location";
 
-    const progress = Number(tracking.progress || 0);
-
-    document.getElementById("responseProgress").style.width = `${progress}%`;
-    document.getElementById("responseProgressText").textContent = `${progress}%`;
-
     document.getElementById("responseStatus").textContent =
         formatStatus(tracking.status || "en_route");
 
-    document.getElementById("mapStatus").textContent =
-        `${tracking.distance_km || "--"} km away • ETA ${tracking.eta_minutes || "--"} min`;
-
     document.getElementById("trackingUpdated").textContent =
         formatTime(tracking.updated_at);
+
+    // Initialize animation controls and start vehicle movement toward victim
+    initMapTrackingControls();
+    startVehicleTrackingAnimation();
 }
 
 async function loadNearby() {
@@ -774,6 +1165,17 @@ async function sendChat() {
     }
 }
 
+function parseMarkdown(text) {
+    if (!text) return "";
+    let html = text
+        .replace(/^["'\s]+|["'\s]+$/g, "")
+        .replace(/^(RESQ|MCP-RESQ)\s+Emergency\s+Response\s+AI[.:"'\s]*/gi, "")
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+    return html;
+}
+
 function addChatMessage(message, sender) {
     const container = document.getElementById("chatMessages");
 
@@ -787,10 +1189,14 @@ function addChatMessage(message, sender) {
     const content = document.createElement("div");
     content.className = "message-content";
 
-    const paragraph = document.createElement("p");
-    paragraph.textContent = message;
+    if (sender === "bot") {
+        content.innerHTML = parseMarkdown(message);
+    } else {
+        const paragraph = document.createElement("p");
+        paragraph.textContent = message;
+        content.appendChild(paragraph);
+    }
 
-    content.appendChild(paragraph);
     wrapper.appendChild(avatar);
     wrapper.appendChild(content);
 
