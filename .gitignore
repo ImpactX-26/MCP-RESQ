@@ -15,3 +15,7 @@ scratch/
 .DS_Store
 .idea/
 .vscode/
+.env
+*.pyc
+__pycache__/
+.vscode/
