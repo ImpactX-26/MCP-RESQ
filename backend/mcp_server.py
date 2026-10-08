@@ -445,11 +445,78 @@ class MCPToolsEngine:
     def dispatch_heavy_rescue_squad(emergency_id: str = "EMG-GENERAL") -> Dict[str, Any]:
         """MCP Tool: Dispatches Heavy Rescue Squad with hydraulic cutters & acoustic drones."""
         rescue_unit = units_db[4]
+    @staticmethod
+    def search_medical_knowledgebase(query: str) -> Dict[str, Any]:
+        """MCP Tool: Searches medical knowledgebase & Red Cross/AHA protocols for accurate first aid."""
+        q_lower = query.lower()
+
+        if "neck" in q_lower or "spine" in q_lower or "spinal" in q_lower or "back" in q_lower or "paralys" in q_lower:
+            return {
+                "tool": "search_medical_knowledgebase",
+                "topic": "Spinal / Cervical Neck Injury Protocol",
+                "source": "American Red Cross & Mayo Clinic Emergency Protocol",
+                "guidance": [
+                    "🚨 DO NOT MOVE THE PATIENT: Do NOT move head, neck, or spine under any circumstances unless in immediate danger of fire.",
+                    "🚑 CALL AMBULANCE IMMEDIATELY: Request ALS Ambulance A-12 with cervical collar and spinal immobilization board.",
+                    "🧥 IMMOBILIZE HEAD & NECK: Place rolled towels, jackets, or sandbags on both sides of head to prevent any movement.",
+                    "🪖 DO NOT REMOVE HELMETS: If victim is wearing a motorcycle or sports helmet, leave it on.",
+                    "🪵 LOG-ROLL RIGIDLY IF VOMITING: If victim vomits or chokes, log-roll their entire body as a single rigid unit without twisting the neck."
+                ]
+            }
+        elif "chok" in q_lower or "airway" in q_lower:
+            return {
+                "tool": "search_medical_knowledgebase",
+                "topic": "Choking & Airway Obstruction",
+                "source": "AHA First Aid Guidelines",
+                "guidance": [
+                    "1. Conscious Adult: Give 5 back blows followed by 5 abdominal thrusts (Heimlich maneuver).",
+                    "2. Unconscious: Lower gently to floor, request ambulance, begin CPR chest compressions.",
+                    "3. Check mouth for visible object before rescue breaths; avoid blind finger sweeps."
+                ]
+            }
+        elif "bleed" in q_lower or "wound" in q_lower or "cut" in q_lower or "hemorrhage" in q_lower:
+            return {
+                "tool": "search_medical_knowledgebase",
+                "topic": "Severe Hemorrhage & Bleeding Control",
+                "source": "AHA / Red Cross First Aid",
+                "guidance": [
+                    "1. Apply direct, firm, continuous pressure over wound with clean cloth or sterile gauze.",
+                    "2. Do not remove blood-soaked cloths; layer additional pads directly on top.",
+                    "3. Apply arterial tourniquet 2-3 inches above wound on limb if life-threatening hemorrhage."
+                ]
+            }
+        elif "cpr" in q_lower or "heart" in q_lower or "cardiac" in q_lower or "chest pain" in q_lower:
+            return {
+                "tool": "search_medical_knowledgebase",
+                "topic": "Cardiac Arrest & CPR Protocol",
+                "source": "AHA CPR Protocol",
+                "guidance": [
+                    "1. Push hard and fast in center of chest (100-120 compressions per minute).",
+                    "2. Alternate 30 compressions with 2 rescue breaths if trained.",
+                    "3. Apply Automated External Defibrillator (AED) as soon as available."
+                ]
+            }
+        elif "burn" in q_lower or "fire" in q_lower or "scald" in q_lower:
+            return {
+                "tool": "search_medical_knowledgebase",
+                "topic": "Thermal & Chemical Burn Protocol",
+                "source": "Red Cross Emergency First Aid",
+                "guidance": [
+                    "1. Cool burn immediately under clean, cool running water for at least 10-20 minutes.",
+                    "2. Cover loosely with sterile, non-stick bandage or clean cling wrap.",
+                    "3. Do NOT apply ice, butter, or ointments. Do NOT break blisters."
+                ]
+            }
+
         return {
-            "tool": "dispatch_heavy_rescue_squad",
-            "unit_dispatched": rescue_unit,
-            "emergency_id": emergency_id,
-            "equipment_deployed": ["Jaws of Life Hydraulic Cutter", "Acoustic Listening Sensor", "Thermal Search Drone"],
-            "timestamp": datetime.now().isoformat()
+            "tool": "search_medical_knowledgebase",
+            "topic": "General Emergency Medical First Aid",
+            "source": "Red Cross Triage Guidelines",
+            "guidance": [
+                "1. Keep patient calm, comfortable, and still.",
+                "2. Call emergency ambulance dispatch immediately.",
+                "3. Monitor airway, breathing, and pulse continuously."
+            ]
         }
+
 
