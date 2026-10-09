@@ -1,4 +1,4 @@
-# MCP-ResQ — Consolidated Platform Documentation
+# MCP-ResQ — Platform Documentation
 
 > **Core Principle**:  
 > **AI Reasons. MCP Connects. Python Verifies.**
