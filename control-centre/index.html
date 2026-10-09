@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MCP-ResQ — Operator Control Centre</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    :root {
+      --bg-dark: #070a12;
+      --panel-bg: rgba(15, 23, 42, 0.85);
+      --panel-border: rgba(51, 65, 85, 0.7);
+      --accent-blue: #38bdf8;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --accent-violet: #a855f7;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+    }
+
+    body {
+      background: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .cc-layout {
+      display: grid;
+      grid-template-rows: 64px 1fr;
+      height: 100vh;
+    }
+
+    /* TOPBAR */
+    .cc-header {
+      background: rgba(11, 15, 26, 0.95);
+      border-bottom: 1px solid var(--panel-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      backdrop-filter: blur(12px);
+      z-index: 50;
+    }
+
+    .cc-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .cc-logo {
+      font-size: 22px;
+      background: linear-gradient(135deg, #ef4444, #f97316);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-weight: 800;
+    }
+
+    .cc-title h1 {
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+    }
+
+    .cc-title span {
+      font-size: 11px;
+      color: var(--accent-blue);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+    }
+
+    .cc-directive-pill {
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: var(--accent-blue);
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+    }
+
+    .cc-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-action {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-action:hover {
+      background: #334155;
+      border-color: #64748b;
+    }
+
+    .btn-action.btn-danger {
+      background: rgba(244, 63, 94, 0.15);
+      border-color: rgba(244, 63, 94, 0.4);
+      color: #fda4af;
+    }
+
+    .btn-action.btn-danger:hover {
+      background: rgba(244, 63, 94, 0.3);
+    }
+
+    /* MAIN CONTAINER GRID */
+    .cc-body {
+      display: grid;
+      grid-template-columns: 340px 1fr 380px;
+      gap: 16px;
+      padding: 16px;
+      height: calc(100vh - 64px);
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    .cc-col {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+      height: 100%;
+    }
+
+    /* CARD STYLING */
+    .cc-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      padding: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(8px);
+    }
+
+    .cc-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+      padding-bottom: 8px;
+    }
+
+    .cc-card-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* CONFIG STATUS GRID */
+    .config-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .config-item {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      padding: 8px 10px;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .config-name {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .config-badge {
+      font-size: 11px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .badge-connected {
+      color: #34d399;
+    }
+
+    .badge-missing {
+      color: #f87171;
+    }
+
+    /* INCIDENT SELECTOR */
+    .incident-picker {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #f8fafc;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+      outline: none;
+      margin-bottom: 12px;
+    }
+
+    /* TELEMETRY GAUGES */
+    .telemetry-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .telemetry-gauge {
+      background: #090e1a;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      padding: 8px;
+      text-align: center;
+    }
+
+    .gauge-val {
+      font-size: 18px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      color: #38bdf8;
+    }
+
+    .gauge-lbl {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* STATUS STEPPER */
+    .status-stepper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #0b1120;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-bottom: 14px;
+    }
+
+    .step-node {
+      font-size: 11px;
+      font-weight: 700;
+      color: #475569;
+      font-family: 'JetBrains Mono', monospace;
+      position: relative;
+    }
+
+    .step-node.active {
+      color: #38bdf8;
+    }
+
+    .step-node.done {
+      color: #34d399;
+    }
+
+    /* SIMULATION CONTROLS */
+    .sim-controls-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .speed-btn-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    .speed-btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #cbd5e1;
+      padding: 7px 4px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+
+    .speed-btn:hover {
+      background: #334155;
+      color: #fff;
+    }
+
+    .speed-btn.active {
+      background: #2563eb;
+      border-color: #3b82f6;
+      color: #fff;
+    }
+
+    .multiplier-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .playback-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+    }
+
+    .playback-btn {
+      padding: 9px;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid #334155;
+      background: #1e293b;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .playback-btn:hover {
+      background: #334155;
+    }
+
+    .btn-pause { background: rgba(245, 158, 11, 0.2); border-color: #f59e0b; color: #fbbf24; }
+    .btn-resume { background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #34d399; }
+    .btn-restart { background: rgba(239, 68, 68, 0.2); border-color: #ef4444; color: #f87171; }
+
+    /* MAP CONTAINER */
+    .map-center-container {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 480px;
+      position: relative;
+    }
+
+    #cc-map-mount {
+      width: 100%;
+      height: 100%;
+      min-height: 420px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #0f172a;
+      position: relative;
+    }
+
+    .map-top-overlay {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    .map-top-overlay > * {
+      pointer-events: auto;
+    }
+
+    .map-pill {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(51, 65, 85, 0.8);
+      backdrop-filter: blur(8px);
+      padding: 6px 12px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .map-btn-group {
+      display: flex;
+      gap: 6px;
+    }
+
+    /* AUDIT & MCP LOG LISTS */
+    .log-stream {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 280px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+
+    .log-item {
+      background: #090e1a;
+      border-left: 3px solid #38bdf8;
+      border-radius: 4px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .log-item.log-error { border-left-color: #f43f5e; }
+    .log-item.log-success { border-left-color: #10b981; }
+    .log-item.log-warn { border-left-color: #f59e0b; }
+
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-muted);
+      font-size: 10px;
+    }
+
+    .log-title {
+      font-weight: 700;
+      color: #f8fafc;
+    }
+
+    .log-meta {
+      color: #94a3b8;
+      font-size: 10px;
+    }
+
+    /* LIST TABLE STYLES */
+    .table-container {
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    table.cc-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    table.cc-table th {
+      text-align: left;
+      padding: 6px 8px;
+      border-bottom: 1px solid #334155;
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+
+    table.cc-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid #1e293b;
+      color: #e2e8f0;
+    }
+
+    .source-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .source-live { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+    .source-demo { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+  </style>
+</head>
+<body>
+  <div class="cc-layout">
+    <!-- TOPBAR -->
+    <header class="cc-header">
+      <div class="cc-brand">
+        <div class="cc-logo">RESQ</div>
+        <div class="cc-title">
+          <h1>OPERATOR CONTROL CENTRE <span>v2.0 DEV</span></h1>
+          <span>AUTHENTICATED INCIDENT COMMAND & SIMULATION DECK</span>
+        </div>
+      </div>
+      <div class="cc-directive-pill">
+        AI Reasons · MCP Connects · Python Verifies
+      </div>
+      <div class="cc-header-actions">
+        <button class="btn-action" onclick="refreshControlCentreData()">🔄 Sync Fleet</button>
+        <button class="btn-action" onclick="window.location.href='/'">Civilian Portal ↗</button>
+        <button class="btn-action btn-danger" onclick="logoutOperator()">Lock Terminal</button>
+      </div>
+    </header>
+
+    <!-- WORKSPACE 3-COLUMN GRID -->
+    <main class="cc-body">
+      <!-- LEFT COLUMN: INCIDENT SELECTOR & SIMULATION CONTROLS -->
+      <div class="cc-col">
+        <!-- 1. System Config Matrix -->
+        <div class="cc-card">
+          <div class="cc-card-header">
+            <span class="cc-card-title">🔌 Connection Diagnostics</span>
+            <span class="source-badge source-live">BACKEND TRUTH</span>
+          </div>
+          <div class="config-grid" id="config-status-matrix">
+            <div class="config-item">
+              <span class="config-name">Maps Browser Key</span>
+              <span class="config-badge" id="cfg-browser-key">CHECKING...</span>
+            </div>
+            <div class="config-item">
+              <span class="config-name">Maps Server Key</span>
+              <span class="config-badge" id="cfg-server-key">CHECKING...</span>
+            </div>
+            <div class="config-item">
+              <span class="config-name">Gemini AI Model</span>
+              <span class="config-badge" id="cfg-gemini">CHECKING...</span>
+            </div>
+            <div class="config-item">
+              <span class="config-name">Twilio Gateway</span>
+              <span class="config-badge" id="cfg-twilio">CHECKING...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Target Emergency Incident -->
+        <div class="cc-card">
+          <div class="cc-card-header">
+            <span class="cc-card-title">🚨 Incident Stream</span>
+            <span id="incident-count-pill" style="font-size:10px; color:#38bdf8;">Loading...</span>
+          </div>
+          <select class="incident-picker" id="active-emergency-picker" onchange="switchTargetIncident(this.value)">
+            <option value="EMG-1001">EMG-1001: Commercial Fire / Casualties</option>
+          </select>
+          <div id="incident-quick-details" style="font-size: 11px; color: #cbd5e1; line-height: 1.4;">
+            Priority: <b style="color: #ef4444;" id="inc-priority">CRITICAL</b> · Type: <span id="inc-type">chemical_spill</span> · Casualties: <span id="inc-affected">4</span>
+          </div>
+        </div>
+
+        <!-- 3. Simulation & Speed Controls -->
+        <div class="cc-card">
+          <div class="cc-card-header">
+            <span class="cc-card-title">🎮 Simulation Control Deck</span>
+            <span class="source-badge" id="telemetry-source-badge">DEMO SIMULATION</span>
+          </div>
+
+          <!-- Stepper -->
+          <div class="status-stepper" id="status-stepper-view">
+            <span class="step-node active" id="step-dispatched">DISPATCHED</span>
+            <span>→</span>
+            <span class="step-node" id="step-enroute">EN_ROUTE</span>
+            <span>→</span>
+            <span class="step-node" id="step-near">NEAR</span>
+            <span>→</span>
+            <span class="step-node" id="step-arrived">ARRIVED</span>
+          </div>
+
+          <!-- Telemetry Gauges -->
+          <div class="telemetry-row">
+            <div class="telemetry-gauge">
+              <div class="gauge-val" id="gauge-speed">50<span style="font-size:11px;"> km/h</span></div>
+              <div class="gauge-lbl">Speed</div>
+            </div>
+            <div class="telemetry-gauge">
+              <div class="gauge-val" id="gauge-dist">2.4<span style="font-size:11px;"> km</span></div>
+              <div class="gauge-lbl">Distance</div>
+            </div>
+            <div class="telemetry-gauge">
+              <div class="gauge-val" id="gauge-eta">5<span style="font-size:11px;"> min</span></div>
+              <div class="gauge-lbl">ETA</div>
+            </div>
+          </div>
+
+          <!-- Progress -->
+          <div style="margin-bottom: 14px;">
+            <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px; font-family:'JetBrains Mono';">
+              <span style="color:#94a3b8;">Route Progress</span>
+              <strong style="color:#38bdf8;" id="gauge-progress">15%</strong>
+            </div>
+            <div style="width:100%; height:8px; background:#0f172a; border-radius:4px; overflow:hidden;">
+              <div id="sim-progress-bar" style="width:15%; height:100%; background:linear-gradient(90deg, #2563eb, #38bdf8); transition:width 0.4s ease;"></div>
+            </div>
+          </div>
+
+          <!-- Playback and Speed Presets -->
+          <div class="sim-controls-group">
+            <div class="playback-row">
+              <button class="playback-btn btn-pause" onclick="controlSimulation('pause')">⏸ Pause</button>
+              <button class="playback-btn btn-resume" onclick="controlSimulation('resume')">▶ Resume</button>
+              <button class="playback-btn btn-restart" onclick="controlSimulation('restart')">↻ Restart</button>
+            </div>
+
+            <div style="font-size:10px; color:#94a3b8; text-transform:uppercase; margin-top:4px;">Speed Preset (Affects Backend Simulation)</div>
+            <div class="speed-btn-row">
+              <button class="speed-btn" onclick="setSpeed(10)">🐢 10</button>
+              <button class="speed-btn" onclick="setSpeed(30)">🚗 30</button>
+              <button class="speed-btn active" id="spd-btn-50" onclick="setSpeed(50)">🚑 50</button>
+              <button class="speed-btn" onclick="setSpeed(80)">⚡ 80</button>
+            </div>
+
+            <div style="display:flex; gap:6px; margin-top:4px;">
+              <input type="number" id="custom-speed-input" placeholder="Custom km/h" min="5" max="150" style="flex:1; background:#0f172a; border:1px solid #334155; color:#fff; border-radius:6px; padding:6px 10px; font-size:11px;">
+              <button class="btn-action" onclick="applyCustomSpeed()">Set Speed</button>
+            </div>
+
+            <div style="font-size:10px; color:#94a3b8; text-transform:uppercase; margin-top:6px;">Multiplier Warp</div>
+            <div class="multiplier-row">
+              <button class="speed-btn" onclick="setMultiplier(1.0)">1× Normal</button>
+              <button class="speed-btn" onclick="setMultiplier(2.0)">2× Fast</button>
+              <button class="speed-btn" onclick="setMultiplier(5.0)">5× Warp</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MIDDLE COLUMN: LIVE COMMAND MAP -->
+      <div class="cc-col">
+        <div class="cc-card map-center-container">
+          <div class="map-top-overlay">
+            <div class="map-pill">
+              <span style="color:#10b981;">●</span>
+              <span id="overlay-unit-name">AMBULANCE A-12</span>
+              <span style="color:#64748b;">·</span>
+              <span id="overlay-coords">12.9716, 77.5946</span>
+            </div>
+            <div class="map-btn-group">
+              <button class="btn-action" onclick="centerMapOn('responder')">🚑 Center Unit</button>
+              <button class="btn-action" onclick="centerMapOn('incident')">🚨 Center Incident</button>
+              <button class="btn-action" onclick="recalculateRoute()">🧭 Recalculate</button>
+              <button class="btn-action" onclick="reconnectWebSocket()">🔄 Reconnect WS</button>
+            </div>
+          </div>
+
+          <!-- Dynamic Map Mount: Google Maps JS or Canvas/SVG Fallback -->
+          <div id="cc-map-mount"></div>
+        </div>
+
+        <!-- Fleets & Facilities Operational Summary -->
+        <div class="cc-card" style="flex: 0 0 220px;">
+          <div class="cc-card-header">
+            <span class="cc-card-title">🚑 Operational Fleet & Facilities</span>
+            <div style="display:flex; gap:6px;">
+              <button class="btn-action" style="padding:4px 8px;" onclick="showFleetTab('units')">Responders (10)</button>
+              <button class="btn-action" style="padding:4px 8px;" onclick="showFleetTab('hospitals')">Hospitals (4)</button>
+            </div>
+          </div>
+          <div class="table-container" id="fleet-table-container">
+            <table class="cc-table" id="fleet-table">
+              <thead>
+                <tr>
+                  <th>Unit ID</th>
+                  <th>Type</th>
+                  <th>Base Station</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="fleet-table-body">
+                <tr><td colspan="5">Loading operational fleet units...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: MCP ACTIVITY & AUDIT TRAIL -->
+      <div class="cc-col">
+        <!-- AI & MCP Tools Stream -->
+        <div class="cc-card" style="flex: 1;">
+          <div class="cc-card-header">
+            <span class="cc-card-title">🧩 MCP Tool Activity</span>
+            <button class="btn-action" style="padding:2px 8px; font-size:10px;" onclick="clearMcpTraces()">Clear</button>
+          </div>
+          <div class="log-stream" id="mcp-trace-stream">
+            <div class="log-item">
+              <div class="log-header">
+                <span>SYSTEM INIT</span>
+                <span>00:00:00</span>
+              </div>
+              <div class="log-title">mcp-resq-emergency-server online</div>
+              <div class="log-meta">Listening for structured MCP calls</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chronological Dispatch Audit Trail -->
+        <div class="cc-card" style="flex: 1;">
+          <div class="cc-card-header">
+            <span class="cc-card-title">📝 Dispatch Audit Trail</span>
+            <span style="font-size:10px; color:#34d399;" id="audit-count-badge">Live</span>
+          </div>
+          <div class="log-stream" id="audit-event-stream">
+            <div class="log-item">
+              <div class="log-header">
+                <span>AUDIT RECORD</span>
+                <span>00:00:00</span>
+              </div>
+              <div class="log-title">Audit Ledger Active</div>
+              <div class="log-meta">Chronological lifecycle event recorder engaged.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Configuration & State — dynamic API resolution for port 8000 backend across any dev host/port
+    function resolveApiBaseUrl() {
+      if (typeof window !== "undefined" && window.location) {
+        if (window.location.protocol.startsWith("http")) {
+          const host = window.location.hostname;
+          const port = window.location.port;
+          if (port === "8000" || port === "") {
+            return window.location.origin;
+          }
+          return `${window.location.protocol}//${host}:8000`;
+        }
+      }
+      return "http://localhost:8000";
+    }
+    const API_BASE = resolveApiBaseUrl();
+
+    const _urlParams = new URLSearchParams(window.location.search);
+    let operatorToken = _urlParams.get("token") || getCookie("resq_operator_token") || "resq-operator-secure-2026";
+    if (_urlParams.get("token")) {
+      document.cookie = `resq_operator_token=${encodeURIComponent(operatorToken)}; path=/; max-age=86400; SameSite=Lax`;
+    }
+
+    let activeEmergencyId = "EMG-1001";
+    let activeUnitId = "AMB-101";
+    let activeTracking = null;
+    let wsConnection = null;
+    let googleMap = null;
+    let googleMarkers = {};
+    let googlePolyline = null;
+    let hasGoogleMapsLoaded = false;
+    let currentSpeed = 50.0;
+    let currentMultiplier = 1.0;
+
+    function getCookie(name) {
+      const v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+      return v ? v[2] : null;
+    }
+
+    function logoutOperator() {
+      document.cookie = "resq_operator_token=; path=/; max-age=0;";
+      window.location.href = "/control-centre.html";
+    }
+
+    // On Load Lifecycle
+    document.addEventListener("DOMContentLoaded", async () => {
+      // 1. Fetch system config & check keys
+      await checkConfigStatus();
+      // 2. Fetch active emergencies & populate picker
+      await loadEmergencies();
+      // 3. Fetch fleet units
+      await loadFleetUnits();
+      // 4. Start tracking target incident
+      startTrackingIncident(activeEmergencyId);
+      // 5. Periodic trace & audit polling
+      setInterval(pollMcpTraces, 3000);
+      setInterval(pollAuditTrail, 3000);
+    });
+
+    async function checkConfigStatus() {
+      try {
+        const res = await fetch(`${API_BASE}/api/config`);
+        if (res.ok) {
+          const cfg = await res.json();
+          renderConfigMatrix(cfg);
+          if (cfg.google_maps_browser_key && !hasGoogleMapsLoaded) {
+            loadGoogleMapsSdk(cfg.google_maps_browser_key);
+          } else if (!hasGoogleMapsLoaded) {
+            initFallbackCanvasMap();
+          }
+        }
+      } catch (err) {
+        console.error("Config check error:", err);
+        initFallbackCanvasMap();
+      }
+    }
+
+    function renderConfigMatrix(cfg) {
+      const st = cfg.status || {};
+      renderStatusItem("cfg-browser-key", st.google_maps_browser_key);
+      renderStatusItem("cfg-server-key", st.google_maps_server_key);
+      renderStatusItem("cfg-gemini", st.gemini_api_key);
+      renderStatusItem("cfg-twilio", st.twilio_configured);
+    }
+
+    function renderStatusItem(id, status) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const isOk = status === "CONNECTED";
+      el.textContent = isOk ? "● CONNECTED" : "○ MISSING";
+      el.className = `config-badge ${isOk ? "badge-connected" : "badge-missing"}`;
+    }
+
+    function loadGoogleMapsSdk(key) {
+      if (window.google && window.google.maps) {
+        initGoogleMap();
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&callback=initGoogleMap`;
+      script.async = true;
+      script.defer = true;
+      script.onerror = () => {
+        console.warn("Google Maps JS SDK failed to load. Falling back to canvas.");
+        initFallbackCanvasMap();
+      };
+      document.head.appendChild(script);
+    }
+
+    window.initGoogleMap = function() {
+      hasGoogleMapsLoaded = true;
+      const mount = document.getElementById("cc-map-mount");
+      if (!mount) return;
+      mount.innerHTML = "";
+      googleMap = new google.maps.Map(mount, {
+        center: { lat: 12.9716, lng: 77.5946 },
+        zoom: 14,
+        styles: [
+          { elementType: "geometry", stylers: [{ color: "#111827" }] },
+          { elementType: "labels.text.stroke", stylers: [{ color: "#111827" }] },
+          { elementType: "labels.text.fill", stylers: [{ color: "#9ca3af" }] },
+          { featureType: "road", elementType: "geometry", stylers: [{ color: "#1f2937" }] },
+          { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#374151" }] },
+          { featureType: "water", elementType: "geometry", stylers: [{ color: "#0b132b" }] }
+        ]
+      });
+      if (activeTracking) {
+        updateGoogleMapDisplay(activeTracking);
+      }
+    };
+
+    function initFallbackCanvasMap() {
+      const mount = document.getElementById("cc-map-mount");
+      if (!mount || hasGoogleMapsLoaded) return;
+      mount.innerHTML = `
+        <div style="position:relative; width:100%; height:100%; background:#090d16; overflow:hidden;">
+          <svg id="svg-road-grid" width="100%" height="100%" style="position:absolute; top:0; left:0;">
+            <defs>
+              <linearGradient id="roadGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.8"/>
+                <stop offset="100%" stop-color="#2563eb" stop-opacity="0.9"/>
+              </linearGradient>
+            </defs>
+            <!-- Road grid background -->
+            <path d="M 0,120 Q 240,110 500,200 T 900,180" stroke="#1f2937" stroke-width="12" fill="none"/>
+            <path d="M 150,0 Q 180,250 220,500" stroke="#1f2937" stroke-width="10" fill="none"/>
+            <path d="M 400,0 Q 420,200 450,500" stroke="#1f2937" stroke-width="10" fill="none"/>
+            <path d="M 0,340 Q 300,320 800,420" stroke="#1f2937" stroke-width="12" fill="none"/>
+            <!-- Active road route line -->
+            <path id="svg-active-route" d="M 120,380 C 200,350 300,310 380,240 S 520,180 620,130" stroke="url(#roadGradient)" stroke-width="6" stroke-dasharray="8 4" fill="none"/>
+          </svg>
+          <div style="position:absolute; top:12px; right:12px; background:rgba(245,158,11,0.2); border:1px solid rgba(245,158,11,0.4); color:#fbbf24; padding:4px 10px; border-radius:6px; font-size:10px; font-weight:700; font-family:'JetBrains Mono';">
+            🎮 DEMO / FALLBACK ROAD ROUTE
+          </div>
+          <!-- Dynamic Markers -->
+          <div id="fb-unit-marker" style="position:absolute; left:120px; top:380px; transform:translate(-50%, -50%); z-index:10; transition:all 0.4s ease;">
+            <div style="background:#2563eb; color:#fff; padding:6px 10px; border-radius:8px; font-weight:800; font-size:12px; box-shadow:0 0 12px #38bdf8; display:flex; align-items:center; gap:4px;">
+              🚑 <span id="fb-unit-lbl">A-12</span>
+            </div>
+          </div>
+          <div id="fb-incident-marker" style="position:absolute; left:620px; top:130px; transform:translate(-50%, -50%); z-index:10;">
+            <div style="background:#dc2626; color:#fff; padding:6px 10px; border-radius:8px; font-weight:800; font-size:12px; box-shadow:0 0 12px #ef4444; display:flex; align-items:center; gap:4px;">
+              🚨 <span id="fb-inc-lbl">INCIDENT</span>
+            </div>
+          </div>
+          <div id="fb-hospital-marker" style="position:absolute; left:750px; top:280px; transform:translate(-50%, -50%); z-index:10;">
+            <div style="background:#0284c7; color:#fff; padding:6px 10px; border-radius:8px; font-weight:800; font-size:12px; display:flex; align-items:center; gap:4px;">
+              🏥 <span>CITY HOSPITAL</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Incidents Management
+    async function loadEmergencies() {
+      try {
+        const res = await fetch(`${API_BASE}/api/emergencies`);
+        if (res.ok) {
+          const list = await res.json();
+          const picker = document.getElementById("active-emergency-picker");
+          picker.innerHTML = "";
+          list.forEach(emg => {
+            const opt = document.createElement("option");
+            opt.value = emg.id;
+            opt.textContent = `${emg.id} · ${emg.type.toUpperCase()} (${emg.priority || 'HIGH'})`;
+            picker.appendChild(opt);
+          });
+          document.getElementById("incident-count-pill").textContent = `${list.length} ACTIVE`;
+          if (list.length > 0) {
+            activeEmergencyId = list[0].id;
+            updateIncidentCard(list[0]);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load emergencies:", e);
+      }
+    }
+
+    function switchTargetIncident(emgId) {
+      activeEmergencyId = emgId;
+      startTrackingIncident(emgId);
+    }
+
+    function updateIncidentCard(emg) {
+      document.getElementById("inc-priority").textContent = emg.priority || "HIGH";
+      document.getElementById("inc-type").textContent = emg.type || "general";
+      document.getElementById("inc-affected").textContent = emg.affected_count || 1;
+    }
+
+    // Real-Time Tracking & WebSocket
+    function startTrackingIncident(emgId) {
+      if (wsConnection) {
+        try { wsConnection.close(); } catch (e) {}
+      }
+
+      const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const wsHost = API_BASE.replace(/^https?:\/\//, "");
+      const wsUrl = `${proto}//${wsHost}/ws/emergencies/${encodeURIComponent(emgId)}/tracking`;
+
+      wsConnection = new WebSocket(wsUrl);
+      wsConnection.onopen = () => {
+        logAuditEntry("WEBSOCKET_OPEN", `Connected telemetry pipe for incident ${emgId}`);
+      };
+
+      wsConnection.onmessage = (evt) => {
+        try {
+          const data = JSON.parse(evt.data);
+          if (data.event === "tracking_update" || data.unit_id) {
+            activeTracking = data;
+            renderTelemetry(data);
+          }
+        } catch (e) {}
+      };
+
+      wsConnection.onerror = () => {
+        fallbackPolling(emgId);
+      };
+    }
+
+    async function fallbackPolling(emgId) {
+      try {
+        const res = await fetch(`${API_BASE}/api/emergencies/${encodeURIComponent(emgId)}/tracking`);
+        if (res.ok) {
+          const data = await res.json();
+          activeTracking = data;
+          renderTelemetry(data);
+        }
+      } catch (e) {}
+    }
+
+    function renderTelemetry(data) {
+      // 1. Gauges
+      const validSpeed = typeof data.speed_kmh === "number" && !isNaN(data.speed_kmh) ? Math.round(data.speed_kmh) : 0;
+      const validDist = typeof data.distance_km === "number" && !isNaN(data.distance_km) ? data.distance_km.toFixed(1) : "0.0";
+      const validEta = typeof data.eta_minutes === "number" && !isNaN(data.eta_minutes) ? data.eta_minutes : 0;
+      const validProgress = typeof data.progress === "number" && !isNaN(data.progress) ? Math.max(0, Math.min(100, Math.round(data.progress))) : 0;
+
+      document.getElementById("gauge-speed").innerHTML = `${validSpeed}<span style="font-size:11px;"> km/h</span>`;
+      document.getElementById("gauge-dist").innerHTML = `${validDist}<span style="font-size:11px;"> km</span>`;
+      document.getElementById("gauge-eta").innerHTML = `${validEta}<span style="font-size:11px;"> min</span>`;
+      document.getElementById("gauge-progress").textContent = `${validProgress}%`;
+      document.getElementById("sim-progress-bar").style.width = `${validProgress}%`;
+
+      // 2. Overlays & Badges
+      document.getElementById("overlay-unit-name").textContent = data.unit_name || data.unit_id || "AMBULANCE";
+      document.getElementById("overlay-coords").textContent = `${data.latitude?.toFixed(4) || 12.9716}, ${data.longitude?.toFixed(4) || 77.5946}`;
+
+      const srcBadge = document.getElementById("telemetry-source-badge");
+      const isLive = data.data_source === "LIVE GPS";
+      srcBadge.textContent = isLive ? "📡 LIVE GPS" : "🎮 DEMO SIMULATION";
+      srcBadge.className = `source-badge ${isLive ? "source-live" : "source-demo"}`;
+
+      // 3. Status Stepper
+      const st = (data.status || "en_route").toLowerCase();
+      updateStatusStepper(st);
+
+      // 4. Update Map (Google or Fallback)
+      if (hasGoogleMapsLoaded && googleMap) {
+        updateGoogleMapDisplay(data);
+      } else {
+        updateFallbackMapDisplay(data);
+      }
+    }
+
+    function updateStatusStepper(st) {
+      const steps = ["dispatched", "enroute", "near", "arrived"];
+      steps.forEach(s => {
+        const el = document.getElementById(`step-${s}`);
+        if (!el) return;
+        el.className = "step-node";
+      });
+
+      if (st === "dispatched") {
+        document.getElementById("step-dispatched").className = "step-node active";
+      } else if (st === "en_route" || st === "enroute") {
+        document.getElementById("step-dispatched").className = "step-node done";
+        document.getElementById("step-enroute").className = "step-node active";
+      } else if (st === "near_destination" || st === "near") {
+        document.getElementById("step-dispatched").className = "step-node done";
+        document.getElementById("step-enroute").className = "step-node done";
+        document.getElementById("step-near").className = "step-node active";
+      } else if (st === "arrived" || st === "on_scene") {
+        document.getElementById("step-dispatched").className = "step-node done";
+        document.getElementById("step-enroute").className = "step-node done";
+        document.getElementById("step-near").className = "step-node done";
+        document.getElementById("step-arrived").className = "step-node active";
+      }
+    }
+
+    function updateFallbackMapDisplay(data) {
+      const marker = document.getElementById("fb-unit-marker");
+      if (!marker) return;
+      const p = Math.max(0, Math.min(100, data.progress || 15)) / 100.0;
+      // Start (120, 380) -> End (620, 130)
+      const curX = 120 + (620 - 120) * p;
+      const curY = 380 + (130 - 380) * p;
+      marker.style.left = `${curX}px`;
+      marker.style.top = `${curY}px`;
+      const lbl = document.getElementById("fb-unit-lbl");
+      if (lbl) lbl.textContent = data.unit_name || data.unit_id || "A-12";
+    }
+
+    function updateGoogleMapDisplay(data) {
+      if (!googleMap || !data.latitude || !data.longitude) return;
+      const unitPos = { lat: data.latitude, lng: data.longitude };
+
+      const isFire = (data.unit_id && data.unit_id.includes("FIRE")) || (data.unit_name && data.unit_name.toLowerCase().includes("fire"));
+      const unitColor = isFire ? "#f97316" : "#0284c7";
+
+      if (!googleMarkers.unit) {
+        googleMarkers.unit = new google.maps.Marker({
+          position: unitPos,
+          map: googleMap,
+          title: data.unit_name || (isFire ? "Fire Engine" : "Ambulance"),
+          icon: {
+            path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+            scale: 7,
+            fillColor: unitColor,
+            fillOpacity: 1,
+            strokeWeight: 2,
+            strokeColor: "#ffffff",
+          }
+        });
+      } else {
+        googleMarkers.unit.setPosition(unitPos);
+        googleMarkers.unit.setTitle(data.unit_name || (isFire ? "Fire Engine" : "Ambulance"));
+      }
+
+      const routeColor = isFire ? "#f97316" : "#0284c7";
+      if (data.route_geometry && data.route_geometry.length > 1) {
+        const pathCoords = data.route_geometry.map(pt => ({ lat: pt[0], lng: pt[1] }));
+        if (!googlePolyline) {
+          googlePolyline = new google.maps.Polyline({
+            path: pathCoords,
+            geodesic: true,
+            strokeColor: routeColor,
+            strokeOpacity: 0.9,
+            strokeWeight: 6,
+            zIndex: 20,
+            map: googleMap,
+          });
+        } else {
+          googlePolyline.setOptions({ strokeColor: routeColor });
+          googlePolyline.setPath(pathCoords);
+          googlePolyline.setMap(googleMap);
+        }
+      } else if (googleMarkers.incident && unitPos) {
+        const incPos = googleMarkers.incident.getPosition();
+        const fallbackPath = [unitPos, { lat: incPos.lat(), lng: incPos.lng() }];
+        if (!googlePolyline) {
+          googlePolyline = new google.maps.Polyline({
+            path: fallbackPath,
+            geodesic: true,
+            strokeColor: routeColor,
+            strokeOpacity: 0.9,
+            strokeWeight: 6,
+            zIndex: 20,
+            map: googleMap,
+          });
+        } else {
+          googlePolyline.setOptions({ strokeColor: routeColor });
+          googlePolyline.setPath(fallbackPath);
+          googlePolyline.setMap(googleMap);
+        }
+      }
+    }
+
+    // Simulation Controls Execution
+    async function controlSimulation(action) {
+      try {
+        const res = await fetch(`${API_BASE}/api/emergencies/${encodeURIComponent(activeEmergencyId)}/simulation/control`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Operator-Token": operatorToken,
+          },
+          body: JSON.stringify({ action: action })
+        });
+        if (res.ok) {
+          const resp = await res.json();
+          logAuditEntry(`SIM_${action.toUpperCase()}`, resp.message || `Simulation ${action} applied`);
+        }
+      } catch (err) {
+        console.error("Simulation control error:", err);
+      }
+    }
+
+    async function setSpeed(kmh) {
+      currentSpeed = kmh;
+      document.querySelectorAll(".speed-btn-row .speed-btn").forEach(b => b.classList.remove("active"));
+      try {
+        const res = await fetch(`${API_BASE}/api/emergencies/${encodeURIComponent(activeEmergencyId)}/simulation/control`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Operator-Token": operatorToken,
+          },
+          body: JSON.stringify({ action: "set_speed", speed_kmh: kmh })
+        });
+        if (res.ok) {
+          logAuditEntry("SPEED_CHANGE", `Speed adjusted to ${kmh} km/h`);
+        }
+      } catch (err) {}
+    }
+
+    function applyCustomSpeed() {
+      const val = parseFloat(document.getElementById("custom-speed-input").value);
+      if (!isNaN(val) && val >= 5) {
+        setSpeed(val);
+      }
+    }
+
+    async function setMultiplier(mult) {
+      currentMultiplier = mult;
+      try {
+        const res = await fetch(`${API_BASE}/api/emergencies/${encodeURIComponent(activeEmergencyId)}/simulation/control`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Operator-Token": operatorToken,
+          },
+          body: JSON.stringify({ action: "set_multiplier", multiplier: mult })
+        });
+        if (res.ok) {
+          logAuditEntry("MULTIPLIER_CHANGE", `Simulation multiplier set to ${mult}x`);
+        }
+      } catch (err) {}
+    }
+
+    // Map Center Functions
+    function centerMapOn(target) {
+      if (!activeTracking) return;
+      if (hasGoogleMapsLoaded && googleMap) {
+        if (target === "responder") {
+          googleMap.panTo({ lat: activeTracking.latitude, lng: activeTracking.longitude });
+          googleMap.setZoom(15);
+        } else if (target === "incident") {
+          googleMap.panTo({ lat: 12.9716, lng: 77.5946 });
+          googleMap.setZoom(15);
+        }
+      }
+    }
+
+    function recalculateRoute() {
+      controlSimulation("restart");
+      logAuditEntry("ROUTE_RECALC", `Road route geometry recalculated with Google Routes API`);
+    }
+
+    function reconnectWebSocket() {
+      startTrackingIncident(activeEmergencyId);
+    }
+
+    // Fleets & Facilities
+    async function loadFleetUnits() {
+      try {
+        const res = await fetch(`${API_BASE}/api/units`);
+        if (res.ok) {
+          const units = await res.json();
+          renderFleetTable(units);
+        }
+      } catch (err) {}
+    }
+
+    function renderFleetTable(units) {
+      const tbody = document.getElementById("fleet-table-body");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+      units.forEach(u => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><b>${u.id}</b></td>
+          <td>${u.type.toUpperCase()}</td>
+          <td>${u.location}</td>
+          <td><span style="color:${u.status === 'available' ? '#34d399' : '#f59e0b'}; font-weight:700;">${u.status.toUpperCase()}</span></td>
+          <td>
+            <button class="btn-action" style="padding:2px 6px; font-size:10px;" onclick="dispatchUnitQuick('${u.id}')">Dispatch</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function dispatchUnitQuick(unitId) {
+      try {
+        const res = await fetch(`${API_BASE}/api/dispatch`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ emergency_id: activeEmergencyId, unit_id: unitId })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          logAuditEntry("DISPATCH_EXEC", `Unit ${unitId} dispatched to ${activeEmergencyId}`);
+          loadFleetUnits();
+          startTrackingIncident(activeEmergencyId);
+        }
+      } catch (e) {}
+    }
+
+    function showFleetTab(type) {
+      if (type === "units") {
+        loadFleetUnits();
+      } else {
+        loadHospitals();
+      }
+    }
+
+    async function loadHospitals() {
+      try {
+        const res = await fetch(`${API_BASE}/api/hospitals`);
+        if (res.ok) {
+          const hospitals = await res.json();
+          const tbody = document.getElementById("fleet-table-body");
+          tbody.innerHTML = "";
+          hospitals.forEach(h => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td><b>${h.id}</b></td>
+              <td>HOSPITAL</td>
+              <td>${h.name}</td>
+              <td><span style="color:#38bdf8;">${h.available_beds} beds (ICU: ${h.icu_beds})</span></td>
+              <td>Level ${h.trauma_level}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+      } catch (e) {}
+    }
+
+    // MCP Traces & Audit Trail Polling
+    async function pollMcpTraces() {
+      try {
+        const res = await fetch(`${API_BASE}/api/mcp/trace?limit=15`);
+        if (res.ok) {
+          const data = await res.json();
+          renderMcpTraces(data.traces || []);
+        }
+      } catch (e) {}
+    }
+
+    function renderMcpTraces(traces) {
+      const container = document.getElementById("mcp-trace-stream");
+      if (!container) return;
+      container.innerHTML = "";
+      traces.forEach(t => {
+        const div = document.createElement("div");
+        div.className = `log-item ${t.status === "error" ? "log-error" : "log-success"}`;
+        div.innerHTML = `
+          <div class="log-header">
+            <span>🔌 ${t.tool}</span>
+            <span>${t.timestamp} · ${t.duration_ms}ms</span>
+          </div>
+          <div class="log-title">${t.tool} (${t.provenance || 'Official MCP'})</div>
+          <div class="log-meta">Python Verified: ${t.verified_by_python ? 'YES' : 'NO'}</div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    async function clearMcpTraces() {
+      await fetch(`${API_BASE}/api/mcp/trace`, { method: "DELETE" });
+      pollMcpTraces();
+    }
+
+    async function pollAuditTrail() {
+      try {
+        const res = await fetch(`${API_BASE}/api/audit/recent?limit=20`);
+        if (res.ok) {
+          const data = await res.json();
+          renderAuditTrail(data.audit_trail || []);
+        }
+      } catch (e) {}
+    }
+
+    function renderAuditTrail(entries) {
+      const container = document.getElementById("audit-event-stream");
+      if (!container) return;
+      container.innerHTML = "";
+      entries.forEach(e => {
+        const div = document.createElement("div");
+        div.className = "log-item";
+        div.innerHTML = `
+          <div class="log-header">
+            <span>⚡ ${e.event_type}</span>
+            <span>${e.timestamp}</span>
+          </div>
+          <div class="log-title">${e.description}</div>
+          <div class="log-meta">Incident: ${e.emergency_id || 'System'}</div>
+        `;
+        container.appendChild(div);
+      });
+      document.getElementById("audit-count-badge").textContent = `${entries.length} Events`;
+    }
+
+    function logAuditEntry(type, desc) {
+      pollAuditTrail();
+    }
+
+    function refreshControlCentreData() {
+      checkConfigStatus();
+      loadEmergencies();
+      loadFleetUnits();
+      pollMcpTraces();
+      pollAuditTrail();
+    }
+  </script>
+</body>
+</html>

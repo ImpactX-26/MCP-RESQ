@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP-ResQ — Emergency Resource Coordination Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-icon">⚡</div>
+                <div>
+                    <h2>MCP-ResQ</h2>
+                    <span>EMERGENCY DISPATCH</span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <p>EMERGENCY ACCESS</p>
+                <button class="nav-item active" data-page="page-home" onclick="switchPage('page-home')">
+                    <span>🏠</span>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-item" data-page="page-emergency" onclick="switchPage('page-emergency')">
+                    <span>🚨</span>
+                    <span>Request Help</span>
+                </button>
+                <button class="nav-item" data-page="page-tracking" onclick="switchPage('page-tracking')">
+                    <span>📍</span>
+                    <span>Live Tracking</span>
+                </button>
+                <button class="nav-item" data-page="page-nearby" onclick="switchPage('page-nearby')">
+                    <span>🏥</span>
+                    <span>Nearby Resources</span>
+                </button>
+                <button class="nav-item" data-page="page-chat" onclick="switchPage('page-chat')">
+                    <span>💬</span>
+                    <span>AI Dispatcher</span>
+                </button>
+            </div>
+
+            <div class="sidebar-bottom">
+                <div class="connection" onclick="refreshAllData()" style="cursor: pointer;" title="Click to test / reconnect backend">
+                    <span class="connection-dot" id="backend-status-indicator"></span>
+                    <span id="backend-status-text">Backend Connected</span>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="main">
+            <!-- Topbar Header -->
+            <header class="topbar">
+                <div>
+                    <h1 id="topbar-title">Emergency Response Dashboard</h1>
+                    <p id="topbar-subtitle">AI Reasons. MCP Connects. Python Verifies.</p>
+                </div>
+                <div class="top-actions">
+                    <button class="icon-button" title="Refresh Telemetry" onclick="refreshAllData()">🔄</button>
+                    <button class="icon-button" title="Emergency AI Dispatcher" onclick="switchPage('page-chat')">💬</button>
+                    <div class="profile" title="Operator Active">OP</div>
+                    <button class="sandwich-btn" id="operator-sandwich-btn" onclick="toggleOperatorDrawer()" title="Operator & System Controls (☰)" aria-label="Toggle Operator Controls">
+                        <span class="sandwich-lines">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </span>
+                        <span class="sandwich-label">Controls</span>
+                    </button>
+                </div>
+            </header>
+
+            <div class="content">
+                <!-- PAGE 1: HOME / DASHBOARD -->
+                <section id="page-home" class="page active">
+                    <div class="hero">
+                        <div class="hero-content">
+                            <span class="hero-label">⚡ MCP-RESQ PROTOCOL ACTIVE</span>
+                            <h2>Intelligent Emergency Response Coordination</h2>
+                            <p>AI-driven resource dispatch with deterministic Python safety verification and real-time Model Context Protocol telemetry. Zero hallucinated resource gaps.</p>
+                            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                                <button class="primary-button" onclick="switchPage('page-emergency')">🚨 Request Immediate Help</button>
+                                <button class="secondary-button" onclick="switchPage('page-tracking')">📍 View Live Tracking</button>
+                            </div>
+                        </div>
+                        <div class="hero-icon">🚨</div>
+                    </div>
+
+                    <div class="home-grid">
+                        <!-- Emergency Categories Card -->
+                        <div class="card emergency-card">
+                            <div class="card-header">
+                                <div>
+                                    <h3>Rapid Incident Categories</h3>
+                                    <p>Tap a category to initiate verified dispatch</p>
+                                </div>
+                                <span class="status-badge responding">INSTANT ACCESS</span>
+                            </div>
+
+                            <div class="emergency-types">
+                                <div class="emergency-type" onclick="quickReport('accident')">
+                                    <span>🚗</span>
+                                    <strong>Road Accident</strong>
+                                    <small>Vehicle collision & trauma</small>
+                                </div>
+                                <div class="emergency-type" onclick="quickReport('medical')">
+                                    <span>🏥</span>
+                                    <strong>Medical Crisis</strong>
+                                    <small>Cardiac / Unconscious</small>
+                                </div>
+                                <div class="emergency-type" onclick="quickReport('fire')">
+                                    <span>🔥</span>
+                                    <strong>Fire Incident</strong>
+                                    <small>Structural / Wildfire / Gas</small>
+                                </div>
+                                <div class="emergency-type" onclick="quickReport('chemical')">
+                                    <span>☣️</span>
+                                    <strong>Chemical Spill</strong>
+                                    <small>Toxic hazmat containment</small>
+                                </div>
+                                <div class="emergency-type" onclick="quickReport('rescue')">
+                                    <span>🦺</span>
+                                    <strong>Search & Rescue</strong>
+                                    <small>Structural collapse / Trapped</small>
+                                </div>
+                                <div class="emergency-type" onclick="quickReport('disaster')">
+                                    <span>🌪️</span>
+                                    <strong>Disaster</strong>
+                                    <small>Flood / Storm / Seismic</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Verification Directives Card -->
+                        <div class="card safety-card">
+                            <div class="card-header">
+                                <div>
+                                    <h3>Safety Guarantees</h3>
+                                    <p>Deterministic system principles</p>
+                                </div>
+                                <span class="status-badge safe">VERIFIED</span>
+                            </div>
+
+                            <div class="safety-list">
+                                <div>
+                                    <span>⚖️</span>
+                                    <p><strong>Zero Hallucinated Gaps</strong><br>Resource shortfalls computed strictly in Python mathematical layer.</p>
+                                </div>
+                                <div>
+                                    <span>📐</span>
+                                    <p><strong>Haversine Proximity</strong><br>Real route distance and unit ETA verified with geometric accuracy.</p>
+                                </div>
+                                <div>
+                                    <span>🧩</span>
+                                    <p><strong>Model Context Protocol</strong><br>Standardized typed tools connect authoritative emergency data.</p>
+                                </div>
+                                <div>
+                                    <span>🛡️</span>
+                                    <p><strong>Explainable Briefings</strong><br>Gemini synthesizes clear operational response plans with full audit trails.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PAGE 2: REQUEST EMERGENCY HELP -->
+                <section id="page-emergency" class="page">
+                    <div class="section-heading">
+                        <div>
+                            <h2>Report Emergency Incident</h2>
+                            <p>Submit emergency details for automated AI extraction, MCP tool query, and verified unit dispatch.</p>
+                        </div>
+                    </div>
+
+                    <div class="emergency-layout">
+                        <!-- Incident Submission Form -->
+                        <div class="card report-card">
+                            <form id="emergency-form" onsubmit="handleEmergencySubmit(event)">
+                                <label for="emg-description">Describe the Incident</label>
+                                <textarea id="emg-description" placeholder="Describe the situation in detail: location details, injuries, number of people involved, hazard signs..." required>There has been a road accident at MG Road intersection with two individuals injured.</textarea>
+
+                                <div class="suggestions">
+                                    <button type="button" onclick="fillSample('chemical')">☣️ Chemical Spill at Lab</button>
+                                    <button type="button" onclick="fillSample('accident')">🚗 Multi-vehicle collision</button>
+                                    <button type="button" onclick="fillSample('medical')">🏥 Severe cardiac crisis</button>
+                                    <button type="button" onclick="fillSample('fire')">🔥 Electrical fire 3rd floor</button>
+                                </div>
+
+                                <div class="location-box">
+                                    <div class="location-icon">📍</div>
+                                    <div>
+                                        <strong>Incident Location (GPS)</strong>
+                                        <p id="loc-status-msg">Default sector: Central Bengaluru (12.9716, 77.5946)</p>
+                                    </div>
+                                    <button type="button" class="secondary-button" onclick="detectLocation()">📍 Detect GPS</button>
+                                </div>
+
+                                <div style="display: flex; gap: 12px; margin-top: 14px;">
+                                    <input type="number" step="any" id="emg-lat" value="12.9716" style="flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px;" placeholder="Latitude" required>
+                                    <input type="number" step="any" id="emg-lng" value="77.5946" style="flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px;" placeholder="Longitude" required>
+                                </div>
+
+                                <button type="submit" class="primary-button large" id="btn-submit-emergency">
+                                    🚨 Detect, Verify & Coordinate Help
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Live Analysis & Telemetry Results -->
+                        <div class="card detection-card">
+                            <div class="card-header">
+                                <h3>Live Telemetry & Analysis</h3>
+                                <span class="status-badge safe" id="det-emg-verified">READY</span>
+                            </div>
+
+                            <div class="analysis-item">
+                                <span>Incident ID</span>
+                                <strong id="det-emg-id">EMG-1001</strong>
+                            </div>
+                            <div class="analysis-item">
+                                <span>Incident Category</span>
+                                <strong id="det-emg-type">ROAD ACCIDENT</strong>
+                            </div>
+                            <div class="analysis-item">
+                                <span>Priority Level</span>
+                                <strong id="det-emg-priority">HIGH</strong>
+                            </div>
+                            <div class="analysis-item">
+                                <span>Assigned Fleet Unit</span>
+                                <strong id="det-assigned-unit">Ambulance A-12 (Dispatched)</strong>
+                            </div>
+                            <div class="analysis-item">
+                                <span>Designated Facility</span>
+                                <strong id="det-hospital">City Emergency Hospital</strong>
+                            </div>
+                            <div class="analysis-item">
+                                <span>Calculated ETA</span>
+                                <strong id="det-emg-eta">6-7 minutes</strong>
+                            </div>
+
+                            <button type="button" class="primary-button" style="width: 100%; margin-top: 18px;" onclick="switchPage('page-tracking')">
+                                📍 Track Responder Live
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PAGE 3: REAL-TIME RESPONSE TRACKING -->
+                <section id="page-tracking" class="page">
+                    <div class="section-heading">
+                        <div>
+                            <h2>Real-Time Response Tracking</h2>
+                            <p>Live responder movement, verified distance telemetry, and dynamic arrival progression.</p>
+                        </div>
+                    </div>
+
+                    <div class="tracking-grid">
+                        <!-- Tactical Map Canvas -->
+                        <div class="card map-card">
+                            <div class="map-header">
+                                <div>
+                                    <h3 id="tracking-map-title">🗺️ Live Google Maps Telemetry</h3>
+                                    <p>Bengaluru Emergency Response Zone · Sector A</p>
+                                </div>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <div class="live-badge" id="live-source-badge" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4);">
+                                        <span></span> 🎮 DEMO SIMULATION
+                                    </div>
+                                    <div class="live-badge" id="live-stream-badge" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4);">
+                                        <span></span> HTTP POLLING (1.5s)
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Map Filters & Traffic Overlay -->
+                            <div class="map-filter-bar">
+                                <button class="map-chip active" id="chip-gmaps-toggle" onclick="toggleTrackingMapView('google')">🗺️ Google Maps (Live)</button>
+                                <button class="map-chip" id="chip-tactical-toggle" onclick="toggleTrackingMapView('tactical')">🎮 Tactical Grid</button>
+                                <span style="display: inline-block; width: 1px; height: 18px; background: var(--border, #334155); margin: 0 4px; vertical-align: middle;"></span>
+                                <button class="map-chip active" id="chip-incident" onclick="toggleMapLayer('incident', this)">📍 Incident</button>
+                                <button class="map-chip active" id="chip-unit" onclick="toggleMapLayer('unit', this)">🚑 Responder</button>
+                                <button class="map-chip active" id="chip-hospital" onclick="toggleMapLayer('hospital', this)">🏥 Hospital</button>
+                                <button class="map-chip active" id="chip-safe" onclick="toggleMapLayer('safe', this)">🛡️ Safe Zone</button>
+                                <button class="map-chip" onclick="centerMapOn('incident')">🎯 Center Incident</button>
+                                <button class="map-chip" onclick="centerMapOn('unit')">🎯 Center Unit</button>
+                                <div class="traffic-badge smooth" id="map-traffic-tag">🚦 Traffic: Moderate (Google Routes)</div>
+                            </div>
+
+                            <div class="map" id="map-canvas" style="position: relative; overflow: hidden;">
+                                <div id="civilian-google-map" style="position: absolute; inset: 0; width: 100%; height: 100%; z-index: 12;"></div>
+                                <div id="map-fallback-tag" style="display: none; position: absolute; top: 10px; right: 10px; z-index: 15; background: rgba(245, 158, 11, 0.2); border: 1px solid rgba(245, 158, 11, 0.4); color: #fbbf24; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; font-family: monospace;">🎮 DEMO / FALLBACK ROUTE</div>
+
+                                <!-- Tactical Approaching Route SVG Layer -->
+                                <svg id="tactical-route-svg" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;">
+                                    <line id="tactical-route-line" x1="25%" y1="25%" x2="55%" y2="55%" stroke="#38bdf8" stroke-width="5" stroke-linecap="round" stroke-dasharray="8 6" opacity="0.95" />
+                                </svg>
+
+                                <div class="road road-one"></div>
+                                <div class="road road-two"></div>
+                                <div class="road road-three"></div>
+                                <div class="road road-four"></div>
+
+                                <div class="map-marker user-marker" id="map-incident-marker">
+                                    📍
+                                    <span id="map-incident-label">INCIDENT (12.9716, 77.5946)</span>
+                                </div>
+                                <div class="map-marker response-marker" id="map-unit-marker">
+                                    🚑
+                                    <span id="map-unit-label">AMBULANCE A-12</span>
+                                </div>
+                                <div class="map-marker hospital-marker" id="map-hospital-marker">
+                                    🏥
+                                    <span>CITY HOSPITAL</span>
+                                </div>
+                                <div class="map-marker" id="map-safe-marker" style="position: absolute; left: 74%; top: 22%; background: #059669; color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; z-index: 10; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
+                                    🛡️
+                                    <span>SAFE ZONE (Arena)</span>
+                                </div>
+
+                                <div class="map-controls">
+                                    <button onclick="zoomMap(1)">+</button>
+                                    <button onclick="zoomMap(-1)">−</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Telemetry Metrics Card -->
+                        <div class="card response-card">
+                            <div class="response-header">
+                                <div class="response-icon" id="track-unit-icon">🚑</div>
+                                <div>
+                                    <span class="status-badge responding" id="track-status-pill">EN ROUTE</span>
+                                    <h3 id="track-unit-name">Ambulance A-12</h3>
+                                </div>
+                            </div>
+
+                            <div class="distance-display">
+                                <strong id="track-distance">Calculating...</strong>
+                                <span id="track-distance-unit"> km away</span>
+                            </div>
+
+                            <div class="eta-box">
+                                <span>Estimated Arrival</span>
+                                <strong id="track-eta">Calculating...</strong>
+                            </div>
+
+                            <div id="arrival-scene-banner" style="display:none; margin-top:14px; background: rgba(16,185,129,0.2); border: 1px solid #10b981; color: #34d399; padding: 10px; border-radius: 6px; font-weight: 700; font-size: 13px; text-align: center;">
+                                ✅ Responder Unit Has Arrived On Scene
+                            </div>
+
+                            <div class="progress-container">
+                                <div class="progress-label">
+                                    <span>Route Completion</span>
+                                    <strong id="track-progress-num">0%</strong>
+                                </div>
+                                <div class="progress">
+                                    <div id="track-progress-bar" style="width: 0%;"></div>
+                                </div>
+                            </div>
+
+                            <div class="response-details">
+                                <div>
+                                    <span>Incident Reference</span>
+                                    <strong id="track-emg-id">EMG-1001</strong>
+                                </div>
+                                <div>
+                                    <span>Telemetry Status</span>
+                                    <strong id="track-data-status" style="color: var(--blue);">SIMULATED LIVE TRACKING</strong>
+                                </div>
+                                <div>
+                                    <span>Travel Speed</span>
+                                    <strong id="track-speed">Calculating...</strong>
+                                </div>
+                                <div>
+                                    <span>Traffic Condition</span>
+                                    <strong id="track-traffic">Analyzing (Google Routes)...</strong>
+                                </div>
+                                <div>
+                                    <span>Departed From</span>
+                                    <strong id="track-from">MG Road Station</strong>
+                                </div>
+                                <div>
+                                    <span>Destination</span>
+                                    <strong id="track-destination">Incident Location (12.9716, 77.5946)</strong>
+                                </div>
+                                <div>
+                                    <span>Last Telemetry Update</span>
+                                    <strong id="track-updated">Just now</strong>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 10px; margin-top: 18px;">
+                                <button class="secondary-button" style="flex: 1;" id="btn-toggle-ws" onclick="toggleLiveWebSocketTracking()">📡 Live WebSocket Stream</button>
+                                <button class="primary-button" style="flex: 1;" onclick="switchPage('page-chat')">💬 Dispatch AI</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PAGE 4: NEARBY RESOURCES -->
+                <section id="page-nearby" class="page">
+                    <div class="section-heading">
+                        <div>
+                            <h2>Nearby Emergency Resources & Hospitals</h2>
+                            <p>Verified medical facilities, emergency units, and containment safe zones identified via MCP.</p>
+                        </div>
+                    </div>
+
+                    <div class="filter-row">
+                        <button class="filter-button active" onclick="filterNearby('all', this)">All Resources</button>
+                        <button class="filter-button" onclick="filterNearby('hospital', this)">Hospitals</button>
+                        <button class="filter-button" onclick="filterNearby('fire', this)">Fire Stations</button>
+                        <button class="filter-button" onclick="filterNearby('rescue', this)">Rescue Units</button>
+                    </div>
+
+                    <div class="nearby-grid" id="nearby-results-grid">
+                        <!-- Populated dynamically via fetchNearbyHelp() -->
+                        <div class="nearby-card">
+                            <div class="nearby-icon">🏥</div>
+                            <div class="nearby-info">
+                                <h3>City Emergency Hospital</h3>
+                                <p>Central Bengaluru · 3.2 km away (~8 mins)</p>
+                                <div class="nearby-meta">
+                                    <span>Beds: 12 Available</span>
+                                    <span>ICU: Yes</span>
+                                    <span>Trauma: Level 1</span>
+                                </div>
+                            </div>
+                            <div class="nearby-actions">
+                                <button class="small-button primary" onclick="sendQuickPrompt('Check capacity of City Emergency Hospital')">Inquire</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PAGE 5: AI DISPATCH ASSISTANT -->
+                <section id="page-chat" class="page">
+                    <div class="section-heading">
+                        <div>
+                            <h2>MCP-ResQ AI Dispatch Assistant</h2>
+                            <p>Ask real-time questions. Responses are reasoned over verified MCP tool context using Gemini.</p>
+                        </div>
+                    </div>
+
+                    <div class="chat-container card">
+                        <div class="chat-header">
+                            <div class="assistant-avatar">🤖</div>
+                            <div>
+                                <h3>ResQ AI Dispatch Assistant</h3>
+                                <span>Connected to Model Context Protocol Servers</span>
+                            </div>
+                            <span class="status-badge ai-status">REASONING ONLINE</span>
+                        </div>
+
+                        <div class="chat-messages" id="chat-messages">
+                            <div class="chat-message">
+                                <div class="message-avatar">🤖</div>
+                                <div class="message-content">
+                                    <p>Hello! I am your MCP-ResQ emergency decision-support assistant. I have live access to verified resource telemetry, nearby hospital readiness, and deterministic verification. How can I assist you right now?</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chat-suggestions">
+                            <button onclick="sendQuickPrompt('Where is the ambulance right now?')">🚑 Where is the ambulance?</button>
+                            <button onclick="sendQuickPrompt('How far is the ambulance from incident EMG-1001?')">📏 How far away is it?</button>
+                            <button onclick="sendQuickPrompt('Which hospital has ICU availability?')">🏥 Which hospital has ICU?</button>
+                            <button onclick="sendQuickPrompt('How many emergency fleet units are available?')">🔢 Fleet availability</button>
+                            <button onclick="sendQuickPrompt('What safety precautions should be taken for a chemical spill?')">☣️ Chemical spill safety</button>
+                        </div>
+
+                        <form class="chat-input" onsubmit="handleChatSubmit(event)">
+                            <input type="text" id="chat-input-field" placeholder="Ask AI dispatcher about ambulance ETA, hospitals, or first-aid instructions..." required>
+                            <button type="submit" id="btn-send-chat">➤</button>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- PAGE 6: OPERATOR CONTROL CENTER -->
+                <section id="page-control" class="page">
+                    <div class="section-heading">
+                        <div>
+                            <h2>Operator & Technical Control Center</h2>
+                            <p>Real-time fleet inventory, authoritative dispatch actions, and verified system telemetry.</p>
+                        </div>
+                    </div>
+
+                    <div class="incident-switcher" id="incident-switcher-bar">
+                        <div class="incident-tab active" onclick="switchIncident('EMG-1001', this)">
+                            <span>🚗</span> EMG-1001: Road Accident (MG Road)
+                        </div>
+                        <div class="incident-tab" onclick="switchIncident('EMG-1002', this)">
+                            <span>☣️</span> EMG-1002: Hazmat Acid Spill (Lab 3)
+                        </div>
+                        <div class="incident-tab" onclick="switchIncident('EMG-1003', this)">
+                            <span>🔥</span> EMG-1003: High-Rise Electrical Fire
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <span>🚑</span>
+                            <div>
+                                <small>Ambulances Ready</small>
+                                <strong id="ctrl-stat-amb">2</strong>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <span>🚒</span>
+                            <div>
+                                <small>Fire Engines Ready</small>
+                                <strong id="ctrl-stat-fire">2</strong>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <span>🦺</span>
+                            <div>
+                                <small>Rescue Teams Ready</small>
+                                <strong id="ctrl-stat-rescue">1</strong>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <span>🚨</span>
+                            <div>
+                                <small>Active Incidents</small>
+                                <strong id="ctrl-stat-emg">1</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="control-grid">
+                        <!-- Fleet Resource Table -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <h3>Emergency Fleet Inventory</h3>
+                                    <p>Live inventory connected via Resource MCP Server</p>
+                                </div>
+                                <button class="secondary-button" style="padding: 6px 12px; font-size: 11px;" onclick="fetchFleetUnits()">🔄 Refresh Fleet</button>
+                            </div>
+
+                            <div class="resource-table">
+                                <div class="table-header">
+                                    <div>UNIT</div>
+                                    <div>NAME</div>
+                                    <div>STATION</div>
+                                    <div>STATUS</div>
+                                    <div>ACTION</div>
+                                </div>
+                                <div id="fleet-table-body">
+                                    <!-- Dynamic rows from fetchFleetUnits() -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Active Operational State -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <h3>Active Incident Telemetry</h3>
+                                    <p>Verified coordination status</p>
+                                </div>
+                                <span class="status-badge safe">DETERMINISTIC OK</span>
+                            </div>
+
+                            <div class="operator-data">
+                                <div>
+                                    <span>Incident Ref</span>
+                                    <strong id="op-active-id">EMG-1001</strong>
+                                </div>
+                                <div>
+                                    <span>Category</span>
+                                    <strong id="op-active-type">ROAD ACCIDENT</strong>
+                                </div>
+                                <div>
+                                    <span>Verified Coordinates</span>
+                                    <strong>12.9716, 77.5946</strong>
+                                </div>
+                                <div>
+                                    <span>Assigned Unit</span>
+                                    <strong id="op-assigned-unit">Ambulance A-12</strong>
+                                </div>
+                                <div>
+                                    <span>Designated Hospital</span>
+                                    <strong id="op-assigned-hosp">City Emergency Hospital</strong>
+                                </div>
+                                <div>
+                                    <span>Python Mathematical Check</span>
+                                    <strong style="color: var(--green);">PASSED (0 Gaps)</strong>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 24px;">
+                                <h3 style="font-size: 13px; margin-bottom: 12px;">Live Operational Activity</h3>
+                                <div class="activity-list" id="activity-feed">
+                                    <div class="activity-item">
+                                        <span>⚡</span>
+                                        <div>
+                                            <strong>MCP Servers initialized</strong>
+                                            <small>Incident, Resource, Safety, Maps servers live</small>
+                                        </div>
+                                    </div>
+                                    <div class="activity-item">
+                                        <span>🚨</span>
+                                        <div>
+                                            <strong>Incident EMG-1001 recorded</strong>
+                                            <small>Coordinates (12.9716, 77.5946) verified</small>
+                                        </div>
+                                    </div>
+                                    <div class="activity-item">
+                                        <span>🚑</span>
+                                        <div>
+                                            <strong>Unit AMB-101 dispatched</strong>
+                                            <small>Haversine calculated distance: 2.1 km</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- What-If Capacity Drift Simulation Panel -->
+                    <div class="whatif-panel">
+                        <div class="whatif-header">
+                            <div>
+                                <h3>⚖️ Deterministic Python What-If Capacity Simulator</h3>
+                                <p style="font-size: 12px; color: var(--muted); margin-top: 2px;">Evaluate resource gap deltas, hospital ICU strain, and traffic surges mathematically without LLM hallucination.</p>
+                            </div>
+                            <span class="status-badge safe" id="whatif-status-badge">PYTHON VERIFIED</span>
+                        </div>
+
+                        <div class="whatif-scenarios">
+                            <button class="scenario-chip active" onclick="runWhatIfScenario('add_resource', this)">➕ Add Ambulance (Mutual Aid)</button>
+                            <button class="scenario-chip" onclick="runWhatIfScenario('remove_resource', this)">➖ Nearest Ambulance Breakdown</button>
+                            <button class="scenario-chip" onclick="runWhatIfScenario('hospital_icu_loss', this)">🏥 Hospital Loses ICU Capacity</button>
+                            <button class="scenario-chip" onclick="runWhatIfScenario('traffic_surge', this)">🚦 +30% Traffic Surge</button>
+                            <button class="scenario-chip" onclick="runWhatIfScenario('simultaneous_emergencies', this)">⚡ Dual Simultaneous Emergencies</button>
+                        </div>
+
+                        <div class="whatif-result-card" id="whatif-results">
+                            <div class="whatif-metric">
+                                <small>Initial Resource Deficit</small>
+                                <strong id="whatif-initial-gap" style="color: var(--primary);">Gap = 1 Unit</strong>
+                            </div>
+                            <div class="whatif-metric">
+                                <small>Post-Simulation Deficit</small>
+                                <strong id="whatif-post-gap" style="color: var(--green);">Gap = 0 Units</strong>
+                            </div>
+                            <div class="whatif-metric">
+                                <small>Mathematical Feasibility</small>
+                                <strong id="whatif-feasibility" style="color: var(--blue);">FEASIBLE (VERIFIED)</strong>
+                            </div>
+                            <div class="whatif-explanation" id="whatif-text">
+                                Scenario: Mutual-aid redeployment of 1 emergency ambulance to Sector A. Deficit eliminated deterministically.
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PAGE 7: MCP TOOLS EXPLORER -->
+                <section id="page-mcp" class="page">
+                    <div class="section-heading">
+                        <div>
+                            <h2>Model Context Protocol (MCP) Tools Explorer</h2>
+                            <p>Authoritative MCP servers exposing 29 structured, typed tools to AI agents.</p>
+                        </div>
+                    </div>
+
+                    <div class="mcp-grid">
+                        <div class="mcp-card">
+                            <span>📍</span>
+                            <h3>Location MCP</h3>
+                            <p>Real-time GPS coordinates of responder units, incident points, and spatial boundaries.</p>
+                            <span class="service-status">ACTIVE · 2 TOOLS</span>
+                            <button onclick="testMcpTool('location')">Test Location</button>
+                        </div>
+
+                        <div class="mcp-card">
+                            <span>🚒</span>
+                            <h3>Resource MCP</h3>
+                            <p>Discovery, ranking, capabilities, and gap analysis across 10 responder vehicle roles.</p>
+                            <span class="service-status">ACTIVE · 5 TOOLS</span>
+                            <button onclick="testMcpTool('resource')">Test Resources</button>
+                        </div>
+
+                        <div class="mcp-card">
+                            <span>🏥</span>
+                            <h3>Hospital MCP</h3>
+                            <p>Live bed capacity, ICU availability, trauma tiers, and facility diversion status.</p>
+                            <span class="service-status">ACTIVE · 5 TOOLS</span>
+                            <button onclick="testMcpTool('hospital')">Test Hospital</button>
+                        </div>
+
+                        <div class="mcp-card">
+                            <span>🧭</span>
+                            <h3>Routing MCP</h3>
+                            <p>Traffic-aware route geometry and ETA with Google Routes & Haversine fallback.</p>
+                            <span class="service-status">ACTIVE · 4 TOOLS</span>
+                            <button onclick="testMcpTool('routing')">Test Routing</button>
+                        </div>
+
+                        <div class="mcp-card">
+                            <span>🛡️</span>
+                            <h3>Safety MCP</h3>
+                            <p>Hazard perimeters, designated assembly shelters, and evacuation corridors.</p>
+                            <span class="service-status">ACTIVE · 3 TOOLS</span>
+                            <button onclick="testMcpTool('safety')">Test Safety</button>
+                        </div>
+
+                        <div class="mcp-card">
+                            <span>📊</span>
+                            <h3>Analytics MCP</h3>
+                            <p>Fleet utilization metrics, incident historical stats, and response time variance.</p>
+                            <span class="service-status">ACTIVE · 3 TOOLS</span>
+                            <button onclick="testMcpTool('analytics')">Test Analytics</button>
+                        </div>
+                    </div>
+
+                    <div class="card mcp-log-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <h3>Live MCP Tool Call Console</h3>
+                            <button class="secondary-button" style="padding: 5px 12px; font-size: 11px;" onclick="clearMcpLog()">Clear Console</button>
+                        </div>
+                        <pre class="mcp-log" id="mcp-console-output">// Click "Test ..." on any MCP card above to view structured response payload</pre>
+                    </div>
+
+                    <!-- Real-Time MCP Execution Trace Table -->
+                    <div class="trace-container">
+                        <div class="trace-header">
+                            <div>
+                                <h3 style="font-size: 14px; font-weight: 700; color: var(--text);">📡 Live MCP Tool Execution Trace Stream</h3>
+                                <p style="font-size: 11px; color: var(--muted); margin-top: 2px;">Real-time audit log of Model Context Protocol calls with execution latencies and provenance.</p>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="secondary-button" style="padding: 5px 12px; font-size: 11px;" onclick="fetchMcpTraces()">🔄 Refresh Trace</button>
+                                <button class="secondary-button" style="padding: 5px 12px; font-size: 11px;" onclick="clearMcpTraces()">Clear Log</button>
+                            </div>
+                        </div>
+                        <table class="trace-table">
+                            <thead>
+                                <tr>
+                                    <th>TRACE ID</th>
+                                    <th>TOOL NAME</th>
+                                    <th>DURATION</th>
+                                    <th>STATUS</th>
+                                    <th>PROVENANCE</th>
+                                    <th>VERIFIED</th>
+                                    <th>TIME</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mcp-trace-tbody">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; color: var(--muted); padding: 18px;">Awaiting MCP tool execution telemetry...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- PAGE 8: DETERMINISTIC PYTHON VERIFICATION -->
+                <section id="page-verification" class="page">
+                    <div class="section-heading">
+                        <div>
+                            <h2>Deterministic Python Verification Engine</h2>
+                            <p>Life-safety guarantees: Pure mathematical calculations with zero hallucinated gaps, distances, or counts.</p>
+                        </div>
+                    </div>
+
+                    <div class="verification-grid">
+                        <div class="verification-card">
+                            <span>📐</span>
+                            <div>
+                                <small>Spatial Geometry</small>
+                                <strong>Haversine Formula (R = 6,371 km)</strong>
+                            </div>
+                        </div>
+
+                        <div class="verification-card">
+                            <span>⚖️</span>
+                            <div>
+                                <small>Resource Allocation</small>
+                                <strong>Mathematical Gap Calculation</strong>
+                            </div>
+                        </div>
+
+                        <div class="verification-card">
+                            <span>🔒</span>
+                            <div>
+                                <small>Safety Constraints</small>
+                                <strong>Zero-Hallucination Guardrails</strong>
+                            </div>
+                        </div>
+
+                        <div class="verification-card">
+                            <span>⏱️</span>
+                            <div>
+                                <small>Simulation Engine</small>
+                                <strong>What-If Capacity Drift Math</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 24px;">
+                        <div class="system-grid">
+                            <div class="system-card">
+                                <div class="system-icon">⚡</div>
+                                <div>
+                                    <h3>FastAPI Service</h3>
+                                    <p>High-performance REST API routing</p>
+                                </div>
+                                <span class="system-online">ONLINE</span>
+                            </div>
+
+                            <div class="system-card">
+                                <div class="system-icon">🤖</div>
+                                <div>
+                                    <h3>Gemini AI Orchestrator</h3>
+                                    <p>MCP reasoning & transparent briefings</p>
+                                </div>
+                                <span class="system-online">ONLINE</span>
+                            </div>
+
+                            <div class="system-card">
+                                <div class="system-icon">🔌</div>
+                                <div>
+                                    <h3>Model Context Protocol</h3>
+                                    <p>Standardized tool context across services</p>
+                                </div>
+                                <span class="system-online">ONLINE</span>
+                            </div>
+
+                            <div class="system-card">
+                                <div class="system-icon">🛡️</div>
+                                <div>
+                                    <h3>Python Verifier</h3>
+                                    <p>Mathematical life-safety verification</p>
+                                </div>
+                                <span class="system-online">ONLINE</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Operator Controls Sandwich Menu (Right-Side Drawer) -->
+    <div id="operator-drawer-backdrop" class="drawer-backdrop" onclick="toggleOperatorDrawer(false)"></div>
+    <aside id="operator-drawer" class="operator-drawer" aria-label="Operator Controls Menu">
+        <div class="drawer-header">
+            <div class="drawer-title-group">
+                <span class="drawer-icon">🎛️</span>
+                <div>
+                    <h3 class="drawer-title">OPERATOR CONTROLS</h3>
+                    <span class="drawer-subtitle">Tactical Deck, Fleet & Verification</span>
+                </div>
+            </div>
+            <button class="drawer-close-btn" onclick="toggleOperatorDrawer(false)" title="Close Menu (Esc)" aria-label="Close">✕</button>
+        </div>
+
+        <div class="drawer-body">
+            <div class="drawer-section-label">TACTICAL COMMAND DECK</div>
+            <button class="nav-item drawer-item standout-operator-btn" onclick="openOperatorControlCentre(); toggleOperatorDrawer(false);">
+                <span>🖥️</span>
+                <div class="item-text">
+                    <strong>Operator Control Centre ↗</strong>
+                    <small>Full simulation deck, map & audit ledger</small>
+                </div>
+            </button>
+
+            <div class="drawer-section-label" style="margin-top: 18px;">PLATFORM CAPABILITIES</div>
+            <button class="nav-item drawer-item" data-page="page-control" onclick="switchPage('page-control'); toggleOperatorDrawer(false);">
+                <span>🎛️</span>
+                <div class="item-text">
+                    <strong>Control Center</strong>
+                    <small>Fleet inventory & manual unit dispatch</small>
+                </div>
+            </button>
+
+            <button class="nav-item drawer-item" data-page="page-mcp" onclick="switchPage('page-mcp'); toggleOperatorDrawer(false);">
+                <span>🧩</span>
+                <div class="item-text">
+                    <strong>MCP Explorer</strong>
+                    <small>Standardized tool registry & diagnostics</small>
+                </div>
+            </button>
+
+            <button class="nav-item drawer-item" data-page="page-verification" onclick="switchPage('page-verification'); toggleOperatorDrawer(false);">
+                <span>🛡️</span>
+                <div class="item-text">
+                    <strong>Verification Engine</strong>
+                    <small>Deterministic Python zero-hallucination checks</small>
+                </div>
+            </button>
+
+            <div class="drawer-footer">
+                <div class="connection-status-pill">
+                    <span class="status-indicator-dot online"></span>
+                    <span>Core Engine: Python Verified</span>
+                </div>
+                <div class="drawer-meta-info">
+                    <span>Operator Mode: Dev Authorized</span>
+                    <button class="text-link-btn" onclick="openOperatorControlCentre(); toggleOperatorDrawer(false);">Launch Deck</button>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
